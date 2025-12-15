@@ -89,10 +89,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if popover == nil {
             popover = NSPopover()
             let contentView = NSHostingView(rootView: MenuView())
-            contentView.frame = NSRect(x: 0, y: 0, width: 200, height: 100)
+            contentView.frame = NSRect(x: 0, y: 0, width: 200, height: 130)
             popover?.contentViewController = NSViewController()
             popover?.contentViewController?.view = contentView
-            popover?.contentSize = NSSize(width: 200, height: 100)
+            popover?.contentSize = NSSize(width: 200, height: 130)
         }
         
         if let button = statusItem?.button {
@@ -108,6 +108,33 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             showNotification("Path copied", message: path)
         } catch {
             showNotification("Error", message: error.localizedDescription)
+        }
+    }
+    
+    @objc func openInTerminal() {
+        do {
+            let path = try getSelectedPath()
+            openTerminal(at: path)
+            showNotification("Terminal opened", message: path)
+        } catch {
+            showNotification("Error", message: error.localizedDescription)
+        }
+    }
+    
+    private func openTerminal(at path: String) {
+        let script = """
+        tell application "Terminal"
+            activate
+            do script "cd '\(path.replacingOccurrences(of: "'", with: "'\\''"))'"
+        end tell
+        """
+        
+        let appleScript = NSAppleScript(source: script)
+        var error: NSDictionary?
+        appleScript?.executeAndReturnError(&error)
+        
+        if let error = error {
+            print("AppleScript error: \(error)")
         }
     }
     
@@ -151,6 +178,17 @@ struct MenuView: View {
                     Text("⌘⇧C")
                         .font(.caption)
                         .foregroundColor(.secondary)
+                }
+            }
+            
+            Button(action: {
+                if let appDelegate = NSApplication.shared.delegate as? AppDelegate {
+                    appDelegate.openInTerminal()
+                }
+            }) {
+                HStack {
+                    Text("💻")
+                    Text("Open in Terminal")
                 }
             }
             
