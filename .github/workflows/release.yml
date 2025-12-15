@@ -39,9 +39,17 @@ jobs:
         # Set executable permissions
         chmod +x Release/CopyPathFinder.app/Contents/MacOS/CopyPathFinder
         
-        # Add icon if available
+        # Add app icon if available
         if [ -f "Assets/AppIcon.icns" ]; then
           cp Assets/AppIcon.icns Release/CopyPathFinder.app/Contents/Resources/
+        fi
+        
+        # Add status bar icons if available
+        if [ -f "Assets/StatusIcon.png" ]; then
+          cp Assets/StatusIcon.png Release/CopyPathFinder.app/Contents/Resources/
+        fi
+        if [ -f "Assets/StatusIcon@2x.png" ]; then
+          cp Assets/StatusIcon@2x.png Release/CopyPathFinder.app/Contents/Resources/
         fi
         
     - name: Code Sign (Optional)

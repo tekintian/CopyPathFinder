@@ -1,6 +1,6 @@
 # macOS 图标转换工具
 
-这个目录包含了用于将PNG图像转换为macOS应用图标格式的工具。
+这个目录包含了用于将PNG图像转换为macOS应用图标格式的工具，包括应用图标和状态栏图标。
 
 ## 工具概览
 
@@ -20,7 +20,24 @@
 - ✅ 快速简单
 - ✅ 适合大多数场景
 
-### 2. convert-icon-imagemagick.sh (高级版)
+### 2. create-status-icon.sh (状态栏图标)
+专门为macOS状态栏创建优化的小图标。
+
+```bash
+# 基本用法（从app.png创建状态栏图标）
+./scripts/create-status-icon.sh Assets/app.png
+
+# 指定输入文件和输出名称
+./scripts/create-status-icon.sh path/to/icon.png StatusIcon
+```
+
+**特点：**
+- ✅ 专为状态栏优化的尺寸（16x16, 22x22）
+- ✅ 自动优化小尺寸显示效果
+- ✅ 支持Retina显示
+- ✅ 模板图标（适应明暗主题）
+
+### 3. convert-icon-imagemagick.sh (高级版)
 基于ImageMagick，提供更多选项和更好的质量。
 
 ```bash
@@ -77,10 +94,13 @@ brew install imagemagick
 # 2. 转换为ICNS格式
 ./scripts/convert-icon.sh Assets/your-icon.png
 
-# 3. 重新构建应用
+# 3. 创建状态栏图标
+./scripts/create-status-icon.sh Assets/your-icon.png
+
+# 4. 重新构建应用
 make build
 
-# 4. 测试应用
+# 5. 测试应用
 open .build/CopyPathFinder.app
 ```
 
@@ -88,6 +108,9 @@ open .build/CopyPathFinder.app
 ```bash
 # 使用ImageMagick进行高质量转换
 ./scripts/convert-icon-imagemagick.sh Assets/your-icon.png AppIcon --high-quality
+
+# 创建状态栏图标
+./scripts/create-status-icon.sh Assets/your-icon.png
 
 # 重新构建
 make build
@@ -98,8 +121,10 @@ make build
 转换后的文件结构：
 ```
 Assets/
-├── your-icon.png          # 原始文件
-├── AppIcon.icns          # 生成的图标文件
+├── app.png               # 原始应用图标
+├── AppIcon.icns          # 生成的应用图标
+├── StatusIcon.png        # 状态栏图标 (16x16)
+├── StatusIcon@2x.png     # 状态栏图标 Retina (22x22)
 └── README.md
 ```
 
@@ -110,7 +135,9 @@ Assets/
 ├── MacOS/
 │   └── CopyPathFinder
 └── Resources/
-    └── AppIcon.icns      # 图标文件
+    ├── AppIcon.icns      # 应用图标
+    ├── StatusIcon.png    # 状态栏图标
+    └── StatusIcon@2x.png # 状态栏Retina图标
 ```
 
 ## Info.plist 配置
@@ -151,11 +178,25 @@ chmod +x scripts/convert-icon-imagemagick.sh
 
 ## 图标设计建议
 
+### 应用图标
 - **尺寸**: 推荐1024x1024像素
 - **格式**: PNG，支持透明度
 - **设计**: 简洁清晰，在小尺寸下仍可识别
 - **对比度**: 确保在深色和浅色背景下都清晰可见
 - **风格**: 与macOS设计语言保持一致
+
+### 状态栏图标
+- **尺寸**: 16x16像素（标准），22x22像素（Retina）
+- **格式**: PNG，支持透明度
+- **设计**: 极简设计，在16px尺寸下清晰可识别
+- **颜色**: 单色设计，作为模板图标适应系统主题
+- **识别性**: 确保在任何背景下都能快速识别
+
+### 通用建议
+- 使用简洁的几何形状
+- 避免过于复杂的细节
+- 确保重要元素在小尺寸下仍然可见
+- 测试在不同背景下的显示效果
 
 ## 相关工具
 

@@ -44,9 +44,17 @@ jobs:
         cp artifact/CopyPathFinder artifact/CopyPathFinder.app/Contents/MacOS/
         cp Sources/CopyPathFinder/Info.plist artifact/CopyPathFinder.app/Contents/
         
-        # Add icon if available
+        # Add app icon if available
         if [ -f "Assets/AppIcon.icns" ]; then
           cp Assets/AppIcon.icns artifact/CopyPathFinder.app/Contents/Resources/
+        fi
+        
+        # Add status bar icons if available
+        if [ -f "Assets/StatusIcon.png" ]; then
+          cp Assets/StatusIcon.png artifact/CopyPathFinder.app/Contents/Resources/
+        fi
+        if [ -f "Assets/StatusIcon@2x.png" ]; then
+          cp Assets/StatusIcon@2x.png artifact/CopyPathFinder.app/Contents/Resources/
         fi
         
     - name: Create DMG

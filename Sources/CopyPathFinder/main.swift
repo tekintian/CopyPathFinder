@@ -19,7 +19,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         
         if let button = statusItem?.button {
-            button.image = NSImage(named: NSImage.folderName)
+            button.image = createStatusBarIcon()
             button.action = #selector(togglePopover)
             button.target = self
         }
@@ -31,6 +31,30 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 self.copySelectedPath()
             }
         }
+    }
+    
+    private func createStatusBarIcon() -> NSImage? {
+        let bundle = Bundle.main
+        
+        // Try to load custom status bar icon from bundle resources
+        if let iconPath = bundle.path(forResource: "StatusIcon", ofType: "png"),
+           let image = NSImage(contentsOfFile: iconPath) {
+            image.isTemplate = true  // Makes it adapt to light/dark mode
+            return image
+        }
+        
+        // Fallback: try to create a small version from app icon
+        if let iconPath = bundle.path(forResource: "AppIcon", ofType: "icns"),
+           let image = NSImage(contentsOfFile: iconPath) {
+            // Resize for status bar
+            let size = NSSize(width: 16, height: 16)
+            image.size = size
+            image.isTemplate = true
+            return image
+        }
+        
+        // Final fallback: use system folder icon
+        return NSImage(named: NSImage.folderName)
     }
     
     private func requestNotificationPermission() {

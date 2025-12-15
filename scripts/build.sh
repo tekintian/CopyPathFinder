@@ -39,9 +39,17 @@ cp "$PROJECT_DIR/Sources/CopyPathFinder/Info.plist" "$CONTENTS_DIR/"
 # Set executable permissions
 chmod +x "$MACOS_DIR/CopyPathFinder"
 
-# Copy icon if available
+# Copy app icon if available
 if [ -f "$PROJECT_DIR/Assets/AppIcon.icns" ]; then
     cp "$PROJECT_DIR/Assets/AppIcon.icns" "$RESOURCES_DIR/"
+fi
+
+# Copy status bar icons if available
+if [ -f "$PROJECT_DIR/Assets/StatusIcon.png" ]; then
+    cp "$PROJECT_DIR/Assets/StatusIcon.png" "$RESOURCES_DIR/"
+fi
+if [ -f "$PROJECT_DIR/Assets/StatusIcon@2x.png" ]; then
+    cp "$PROJECT_DIR/Assets/StatusIcon@2x.png" "$RESOURCES_DIR/"
 fi
 
 echo "✅ Build completed!"
