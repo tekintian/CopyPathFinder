@@ -7,7 +7,7 @@ on:
 
 jobs:
   create-release:
-    runs-on: macos-latest
+    runs-on: macos-11
     
     steps:
     - name: Checkout
@@ -38,6 +38,11 @@ jobs:
         
         # Set executable permissions
         chmod +x Release/CopyPathFinder.app/Contents/MacOS/CopyPathFinder
+        
+        # Add icon if available
+        if [ -f "Assets/AppIcon.icns" ]; then
+          cp Assets/AppIcon.icns Release/CopyPathFinder.app/Contents/Resources/
+        fi
         
     - name: Code Sign (Optional)
       if: env.APPLE_SIGNING_IDENTITY != ''

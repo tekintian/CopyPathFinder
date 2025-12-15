@@ -15,7 +15,7 @@ A lightweight macOS utility to copy file paths from Finder to clipboard with glo
 ### Build from Source
 
 ```bash
-git clone https://github.com/yourusername/CopyPathFinder.git
+git clone https://github.com/tekintian/CopyPathFinder.git
 cd CopyPathFinder
 swift build
 open .build/release/CopyPathFinder

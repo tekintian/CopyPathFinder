@@ -1,5 +1,6 @@
 import Cocoa
 import SwiftUI
+import UserNotifications
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
@@ -8,6 +9,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupMenuBar()
         setupGlobalShortcut()
+        requestNotificationPermission()
         
         // Hide dock icon and main window
         NSApp.setActivationPolicy(.accessory)
@@ -27,6 +29,22 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { event in
             if event.keyCode == 8 && event.modifierFlags.contains([.command, .shift]) {
                 self.copySelectedPath()
+            }
+        }
+    }
+    
+    private func requestNotificationPermission() {
+        // Check if running in app bundle environment
+        guard Bundle.main.bundleURL.pathExtension == "app" else {
+            print("Running outside app bundle, skipping notification permission request")
+            return
+        }
+        
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+            if granted {
+                print("Notification permission granted")
+            } else if let error = error {
+                print("Notification permission error: \(error)")
             }
         }
     }
@@ -70,10 +88,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func showNotification(_ title: String, message: String) {
-        let notification = NSUserNotification()
-        notification.title = title
-        notification.informativeText = message
-        NSUserNotificationCenter.default.deliver(notification)
+        // Check if running in app bundle environment
+        guard Bundle.main.bundleURL.pathExtension == "app" else {
+            print("Notification: \(title) - \(message)")
+            return
+        }
+        
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = message
+        content.sound = UNNotificationSound.default
+        
+        let request = UNNotificationRequest(
+            identifier: UUID().uuidString,
+            content: content,
+            trigger: nil
+        )
+        
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("Notification error: \(error)")
+            }
+        }
     }
 }
 
@@ -86,18 +122,26 @@ struct MenuView: View {
                 }
             }) {
                 HStack {
-                    Image(systemName: "doc.on.clipboard")
+                    Text("📋")
                     Text("Copy Path")
+                    Text("⌘⇧C")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
             }
-            .keyboardShortcut("c", modifiers: [.command, .shift])
             
             Divider()
             
-            Button("Quit") {
+            Button(action: {
                 NSApplication.shared.terminate(nil)
+            }) {
+                HStack {
+                    Text("Quit")
+                    Text("⌘Q")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
             }
-            .keyboardShortcut("q")
         }
         .padding()
     }
