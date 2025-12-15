@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
+
+jobs:
+  build:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Cache Swift Package Manager
+      uses: actions/cache@v3
+      with:
+        path: .build
+        key: ${{ runner.os }}-spm-${{ hashFiles('Package.swift') }}
+        restore-keys: |
+          ${{ runner.os }}-spm-
+          
+    - name: Build
+      run: swift build -c release
+      
+    - name: Test
+      run: |
+        # Run basic syntax check
+        swift build -c debug
+        
+    - name: Package Application
+      run: |
+        mkdir -p artifact
+        cp -R .build/release/CopyPathFinder artifact/
+        
+        # Create app bundle
+        mkdir -p artifact/CopyPathFinder.app/Contents/MacOS
+        mkdir -p artifact/CopyPathFinder.app/Contents/Resources
+        cp artifact/CopyPathFinder artifact/CopyPathFinder.app/Contents/MacOS/
+        cp Sources/CopyPathFinder/Info.plist artifact/CopyPathFinder.app/Contents/
+        
+        # Add icon if available
+        if [ -f "Assets/AppIcon.icns" ]; then
+          cp Assets/AppIcon.icns artifact/CopyPathFinder.app/Contents/Resources/
+        fi
+        
+    - name: Create DMG
+      run: |
+        # Create DMG installer
+        mkdir -p dmg/CopyPathFinder
+        cp -R artifact/CopyPathFinder.app dmg/CopyPathFinder/
+        
+        # Create DMG
+        hdiutil create -volname "Copy Path Finder" -srcfolder dmg -ov -format UDZO artifact/CopyPathFinder.dmg
+        
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: CopyPathFinder-macOS
+        path: artifact/
+        retention-days: 30
+        
+  release:
+    needs: build
+    runs-on: macos-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Download Artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: CopyPathFinder-macOS
+        path: artifact/
+        
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: artifact/*
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

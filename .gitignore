@@ -1,0 +1,27 @@
+# Xcode
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcodeproj/xcuserdata/
+*.xcworkspace/
+.DS_Store
+
+# Swift
+.build/
+.swiftpm/
+*.swiftpm/
+
+# macOS
+*.dSYM/
+*.dylib
+DerivedData/
+
+# Package
+Package.resolved
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
