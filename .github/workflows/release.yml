@@ -52,9 +52,19 @@ jobs:
           cp Assets/StatusIcon@2x.png Release/CopyPathFinder.app/Contents/Resources/
         fi
         
-    - name: Code Sign (Optional)
+    - name: Code Sign (Self-Signed)
+      run: |
+        # Apply simple ad-hoc signature
+        echo "🔐 Applying ad-hoc signature..."
+        codesign --force --deep --sign "-" Release/CopyPathFinder.app
+        
+        # Verify signature
+        codesign --verify --verbose Release/CopyPathFinder.app || true
+        
+    - name: Code Sign (Optional - Developer Certificate)
       if: env.APPLE_SIGNING_IDENTITY != ''
       run: |
+        echo "🏛️ Applying developer certificate signature..."
         codesign --force --verify --verbose --sign "${{ secrets.APPLE_SIGNING_IDENTITY }}" Release/CopyPathFinder.app
       env:
         APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
@@ -78,6 +88,68 @@ jobs:
         sha256sum CopyPathFinder.dmg > CopyPathFinder.dmg.sha256
         sha256sum Release/CopyPathFinder.zip > CopyPathFinder.zip.sha256
         
+    - name: Generate Release Notes
+      run: |
+        cat > release_notes.md << 'EOF'
+        # 🚀 Copy Path Finder ${{ github.ref_name }}
+        
+        ## 📦 下载说明
+        
+        ### 🔧 安装方法
+        
+        1. **DMG 安装包** (推荐)
+           - 下载 `CopyPathFinder.dmg`
+           - 双击挂载，拖拽应用到 Applications 文件夹
+           - 首次运行可能需要允许运行
+        
+        2. **ZIP 压缩包**
+           - 下载 `CopyPathFinder.zip`
+           - 解压后将 `CopyPathFinder.app` 复制到 Applications 文件夹
+        
+        ### 🔐 安全提示
+        
+        本版本使用自签名证书，首次运行时可能看到安全提示：
+        
+        **解决方法：**
+        - 右键点击应用 → "打开" → 在弹出的警告中点击"打开"
+        - 或在"系统设置 > 隐私与安全性"中点击"仍要打开"
+        
+        ### ✨ 功能特性
+        
+        - 📋 一键复制文件路径
+        - 🎯 支持 Finder 和访达
+        - 🍎 专为 macOS 设计
+        - 📱 状态栏图标，随时可用
+        - 🌍 支持中英文界面
+        
+        ### 🖥️ 系统要求
+        
+        - macOS 10.15 或更高版本
+        - 需要授予 Apple Events 权限
+        
+        ### 📝 使用方法
+        
+        1. 启动应用后，状态栏会显示图标
+        2. 在 Finder 中选中文件或文件夹
+        3. 点击状态栏图标或使用快捷键
+        4. 文件路径将自动复制到剪贴板
+        
+        ### 🔗 相关链接
+        
+        - [使用文档](https://github.com/tekintian/CopyPathFinder/blob/main/README.md)
+        - [自签名指南](https://github.com/tekintian/CopyPathFinder/blob/main/docs/SELF_SIGNING.md)
+        - [问题反馈](https://github.com/tekintian/CopyPathFinder/issues)
+        
+        ---
+        
+        **📊 文件校验**
+        - SHA256 校验和文件已提供，请验证文件完整性
+        - `sha256sum -c CopyPathFinder.dmg.sha256`
+        
+        **⚠️ 免责声明**
+        本软件仅供学习和个人使用，使用风险自负。
+        EOF
+        
     - name: Release
       uses: softprops/action-gh-release@v1
       with:
@@ -86,7 +158,7 @@ jobs:
           CopyPathFinder.dmg.sha256
           Release/CopyPathFinder.zip
           Release/CopyPathFinder.zip.sha256
-        generate_release_notes: true
+        body_path: release_notes.md
         draft: false
         prerelease: false
       env:

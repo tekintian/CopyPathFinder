@@ -1,11 +1,17 @@
 #!/bin/bash
 
 # Copy Path Finder Build Script
-# Usage: ./scripts/build.sh [debug|release]
+# Usage: ./scripts/build.sh [debug|release] [sign-method]
+# Examples:
+#   ./scripts/build.sh debug         # Debug build
+#   ./scripts/build.sh release       # Release build without signing
+#   ./scripts/build.sh release simple    # Release build with simple ad-hoc signing
+#   ./scripts/build.sh release full      # Release build with full certificate signing
 
 set -e
 
 BUILD_TYPE=${1:-release}
+SIGN_APP=${2:-false}
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="$PROJECT_DIR/.build"
 
@@ -55,17 +61,44 @@ fi
 echo "✅ Build completed!"
 echo "App bundle: $APP_DIR"
 
+# Sign app if requested
+if [ "$SIGN_APP" = "simple" ]; then
+    echo "🔐 Simple ad-hoc signing..."
+    "$PROJECT_DIR/scripts/self-sign-simple.sh" "$APP_DIR"
+elif [ "$SIGN_APP" = "full" ]; then
+    echo "🔐 Full certificate signing..."
+    "$PROJECT_DIR/scripts/self-sign.sh" --sign-only "$APP_DIR"
+fi
+
 if [ "$BUILD_TYPE" = "release" ]; then
-    # Create DMG
+    # Create simple DMG with app and Applications shortcut
     echo "💿 Creating DMG..."
+    
+    # Get version from Info.plist
+    VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$CONTENTS_DIR/Info.plist" 2>/dev/null || echo "1.0.0")
+    DMG_NAME="CopyPathFinder_v${VERSION}"
+    DMG_PATH="$BUILD_DIR/${DMG_NAME}.dmg"
     DMG_DIR="$BUILD_DIR/dmg"
-    mkdir -p "$DMG_DIR/CopyPathFinder"
-    cp -R "$APP_DIR" "$DMG_DIR/CopyPathFinder/"
     
+    # Clean and create DMG directory
+    rm -rf "$DMG_DIR"
+    mkdir -p "$DMG_DIR"
+    
+    # Copy app to DMG directory
+    cp -R "$APP_DIR" "$DMG_DIR/"
+    
+    # Create Applications folder symbolic link
+    ln -s /Applications "$DMG_DIR/Applications"
+    
+    echo "✅ DMG contents prepared:"
+    echo "   - CopyPathFinder.app"
+    echo "   - Applications (shortcut)"
+    
+    # Create DMG
     cd "$BUILD_DIR"
-    hdiutil create -volname "Copy Path Finder" -srcfolder dmg -ov -format UDZO CopyPathFinder.dmg
+    hdiutil create -volname "Copy Path Finder" -srcfolder dmg -ov -format UDZO "$DMG_PATH"
     
-    echo "📀 DMG created: $BUILD_DIR/CopyPathFinder.dmg"
+    echo "📀 DMG created: $DMG_PATH"
 fi
 
 echo "🎉 Done!"

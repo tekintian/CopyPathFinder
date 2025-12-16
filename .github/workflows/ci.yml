@@ -57,6 +57,15 @@ jobs:
           cp Assets/StatusIcon@2x.png artifact/CopyPathFinder.app/Contents/Resources/
         fi
         
+    - name: Code Sign (Self-Signed)
+      run: |
+        # Apply simple ad-hoc signature for CI builds
+        echo "🔐 Applying ad-hoc signature..."
+        codesign --force --deep --sign "-" artifact/CopyPathFinder.app
+        
+        # Verify signature
+        codesign --verify --verbose artifact/CopyPathFinder.app || true
+        
     - name: Create DMG
       run: |
         # Create DMG installer

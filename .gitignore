@@ -27,3 +27,6 @@ Package.resolved
 *.log
 *.code-workspace
 /CopyPathFinder.app
+/\#src
+/CopyPathFinder_v1.0.0.dmg
+/test

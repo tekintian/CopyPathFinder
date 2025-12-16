@@ -4,7 +4,7 @@
 
 ```bash
 # Clone the repository
-git clone <your-repo-url> CopyPathFinder
+git clone https://github.com/tekintian/CopyPathFinder.git CopyPathFinder
 cd CopyPathFinder
 
 # Initialize development environment
