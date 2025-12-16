@@ -356,32 +356,35 @@ struct AdvancedSettingsView: View {
                             .font(.caption)
                             .foregroundColor(.secondary)
                     } else {
-                        VStack(alignment: .leading, spacing: 4) {
-                            ForEach(Array(settingsManager.recentPaths.enumerated()), id: \.offset) { index, path in
-                                HStack {
-                                    Text("\(index + 1).")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                        .frame(width: 20, alignment: .leading)
-                                    Text(path)
-                                        .font(.caption)
-                                        .foregroundColor(.primary)
-                                        .lineLimit(1)
-                                        .truncationMode(.middle)
-                                    Spacer()
-                                }
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 2)
-                                .background(Color(NSColor.controlBackgroundColor))
-                                .cornerRadius(4)
-                                .onTapGesture {
-                                    // Copy path to clipboard when clicked
-                                    NSPasteboard.general.clearContents()
-                                    NSPasteboard.general.setString(path, forType: .string)
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 4) {
+                                ForEach(Array(settingsManager.recentPaths.enumerated()), id: \.offset) { index, path in
+                                    HStack {
+                                        Text("\(index + 1).")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                            .frame(width: 20, alignment: .leading)
+                                        Text(path)
+                                            .font(.caption)
+                                            .foregroundColor(.primary)
+                                            .lineLimit(1)
+                                            .truncationMode(.middle)
+                                        Spacer()
+                                    }
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 2)
+                                    .background(Color(NSColor.controlBackgroundColor))
+                                    .cornerRadius(4)
+                                    .onTapGesture {
+                                        // Copy path to clipboard when clicked
+                                        NSPasteboard.general.clearContents()
+                                        NSPasteboard.general.setString(path, forType: .string)
+                                    }
                                 }
                             }
+                            .padding(.vertical, 2)
                         }
-                        .frame(maxHeight: 120)
+                        .frame(maxHeight: 150)
                     }
                 }
             }
