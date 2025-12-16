@@ -107,6 +107,8 @@ struct GeneralSettingsView: View {
                     settingsManager.saveAllSettings()
                     // Force UI refresh by updating localization
                     LocalizationManager.shared.setLanguage(LocalizationManager.Language(rawValue: newLanguage) ?? .chineseSimplified)
+                    // Notify other views that language has changed
+                    NotificationCenter.default.post(name: NSNotification.Name("LanguageChanged"), object: nil)
                 }
             }
             
@@ -120,6 +122,7 @@ struct ShortcutSettingsView: View {
     @ObservedObject var shortcutManager: ShortcutManager
     @State private var showingCopyPathRecordingAlert = false
     @State private var showingTerminalRecordingAlert = false
+    @State private var refreshID = UUID()
     
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -209,6 +212,11 @@ struct ShortcutSettingsView: View {
             }
         }
         .padding()
+        .id(refreshID)
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("LanguageChanged"))) { _ in
+            // Force view refresh when language changes
+            refreshID = UUID()
+        }
         .onAppear {
             // Setup global key monitoring for shortcut recording
             NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in

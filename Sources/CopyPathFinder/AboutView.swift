@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AboutView: View {
     var onClose: () -> Void
+    @State private var refreshID = UUID()
     
     var body: some View {
         VStack(spacing: 20) {
@@ -56,5 +57,10 @@ struct AboutView: View {
         }
         .padding()
         .frame(width: 400, height: 300)
+        .id(refreshID)
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("LanguageChanged"))) { _ in
+            // Force view refresh when language changes
+            refreshID = UUID()
+        }
     }
 }

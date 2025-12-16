@@ -4,6 +4,7 @@ struct MenuView: View {
     let appDelegate: AppDelegate
     @ObservedObject var shortcutManager = ShortcutManager()
     @State private var showingMoreOptions = false
+    @State private var refreshID = UUID()
     
     var body: some View {
         VStack(spacing: 8) {
@@ -49,6 +50,11 @@ struct MenuView: View {
         }
         .padding(10)
         .frame(width: 220)
+        .id(refreshID)
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("LanguageChanged"))) { _ in
+            // Force view refresh when language changes
+            refreshID = UUID()
+        }
     }
 }
 
