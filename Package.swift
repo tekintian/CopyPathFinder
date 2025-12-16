@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "CopyPathFinder",
-    defaultLocalization: "zh-Hans",
+    defaultLocalization: "en",
     platforms: [
         .macOS(.v10_15)
     ],

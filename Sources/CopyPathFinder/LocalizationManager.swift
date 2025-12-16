@@ -19,7 +19,22 @@ class LocalizationManager {
         }
     }
     
-    private var currentLanguage: Language = .chineseSimplified
+    private var currentLanguage: Language = {
+        // 检测系统首选语言
+        let preferredLanguages = Locale.preferredLanguages
+        
+        // 按优先级检查支持的语言
+        for languageCode in preferredLanguages {
+            if languageCode.hasPrefix("zh") {
+                return .chineseSimplified
+            } else if languageCode.hasPrefix("en") {
+                return .english
+            }
+        }
+        
+        // 如果都不匹配，默认回退到英语
+        return .english
+    }()
     
     func localizedString(for key: String) -> String {
         guard let path = Bundle.main.path(forResource: currentLanguage.rawValue, ofType: "lproj"),

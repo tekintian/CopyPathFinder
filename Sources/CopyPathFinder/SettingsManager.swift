@@ -29,17 +29,20 @@ class SettingsManager: ObservableObject {
     }
     
     init() {
-        // Initialize with default values
+        // Get system default language
+        let systemLanguage = LocalizationManager.shared.getCurrentLanguage().rawValue
+        
+        // Initialize with default values (using system language)
         self.launchAtLogin = false
         self.showNotifications = true
         self.appIcon = "default"
-        self.appLanguage = "zh-Hans"
+        self.appLanguage = systemLanguage
         self.enableDebugMode = false
         self.logLevel = "Info"
         self.maxRecentPaths = 10
         self.recentPaths = []
         
-        // Load from UserDefaults safely
+        // Load from UserDefaults safely (will override system language if user has set a preference)
         loadSettings()
         
         // Set initial language in LocalizationManager
@@ -47,7 +50,7 @@ class SettingsManager: ObservableObject {
             LocalizationManager.shared.setLanguage(language)
         }
         
-        print("SettingsManager initialized with language: \(self.appLanguage)")
+        print("SettingsManager initialized with language: \(self.appLanguage) (system: \(systemLanguage))")
     }
     
     private func loadSettings() {
@@ -85,11 +88,13 @@ class SettingsManager: ObservableObject {
     }
     
     func resetToDefaults() {
-        // Reset to default values (preview mode - not saved yet)
+        // Reset to default values (using system default language)
+        let systemLanguage = LocalizationManager.shared.getCurrentLanguage().rawValue
+        
         launchAtLogin = false
         showNotifications = true
         appIcon = "default"
-        appLanguage = "zh-Hans"
+        appLanguage = systemLanguage
         enableDebugMode = false
         logLevel = "Info"
         maxRecentPaths = 10
