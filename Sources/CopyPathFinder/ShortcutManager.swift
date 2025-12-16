@@ -183,6 +183,23 @@ class ShortcutManager: ObservableObject {
             return false
         }
         
+        // Don't allow navigation and special keys that could interfere with UI
+        let restrictedKeys: [Int] = [
+            48, // Tab
+            51, // Delete
+            53, // Esc
+            36, // Return
+            52, // Enter
+            123, // Left arrow
+            124, // Right arrow
+            125, // Down arrow
+            126  // Up arrow
+        ]
+        
+        guard !restrictedKeys.contains(Int(event.keyCode)) else {
+            return false
+        }
+        
         let newShortcut = ShortcutConfiguration(
             keyCode: Int(event.keyCode),
             modifiers: event.modifierFlags.intersection([.command, .option, .control, .shift]).rawValue
@@ -197,5 +214,13 @@ class ShortcutManager: ObservableObject {
         }
         
         return true
+    }
+    
+    func resetToDefaults() {
+        copyPathShortcut = ShortcutConfiguration(keyCode: 8, modifiers: NSEvent.ModifierFlags.command.rawValue | NSEvent.ModifierFlags.shift.rawValue) // ⌘⇧C
+        openTerminalShortcut = ShortcutConfiguration(keyCode: 17, modifiers: NSEvent.ModifierFlags.command.rawValue | NSEvent.ModifierFlags.shift.rawValue) // ⌘⇧T
+        isRecordingCopyPathShortcut = false
+        isRecordingOpenTerminalShortcut = false
+        saveShortcuts()
     }
 }
