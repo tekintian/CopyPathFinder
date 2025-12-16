@@ -5,6 +5,7 @@ struct SettingsView: View {
     @ObservedObject var settingsManager: SettingsManager
     var onClose: (() -> Void)?
     @State private var refreshID = UUID()
+    @State private var selectedTab: Int = 0
     
     var body: some View {
         VStack(spacing: 0) {
@@ -26,7 +27,7 @@ struct SettingsView: View {
             .padding()
             
             // Content
-            TabView {
+            TabView(selection: $selectedTab) {
                 // General Tab
                 GeneralSettingsView(settingsManager: settingsManager)
                     .tabItem {
@@ -35,6 +36,7 @@ struct SettingsView: View {
                             Text("general".localized)
                         }
                     }
+                    .tag(0)
                 
                 // Shortcuts Tab
                 ShortcutSettingsView(shortcutManager: shortcutManager)
@@ -44,6 +46,7 @@ struct SettingsView: View {
                             Text("shortcuts".localized)
                         }
                     }
+                    .tag(1)
                 
                 // Advanced Tab
                 AdvancedSettingsView(settingsManager: settingsManager, shortcutManager: shortcutManager)
@@ -53,6 +56,7 @@ struct SettingsView: View {
                             Text("advanced".localized)
                         }
                     }
+                    .tag(2)
             }
             .frame(height: 380)
         }
@@ -60,7 +64,12 @@ struct SettingsView: View {
         .id(refreshID)
         .onReceive(settingsManager.$appLanguage) { _ in
             // Force view refresh when language changes
+            let currentTab = selectedTab
             refreshID = UUID()
+            // Preserve the current tab selection after refresh
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                selectedTab = currentTab
+            }
         }
     }
 }
@@ -123,6 +132,7 @@ struct ShortcutSettingsView: View {
     @State private var showingCopyPathRecordingAlert = false
     @State private var showingTerminalRecordingAlert = false
     @State private var refreshID = UUID()
+    @State private var keyMonitor: Any?
     
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -217,22 +227,60 @@ struct ShortcutSettingsView: View {
             // Force view refresh when language changes
             refreshID = UUID()
         }
-        .onAppear {
-            // Setup global key monitoring for shortcut recording
-            NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-                if self.shortcutManager.isRecordingCopyPathShortcut {
-                    if self.shortcutManager.recordShortcut(event, forCopyPath: true) {
-                        self.shortcutManager.saveShortcuts()
+        .onReceive(shortcutManager.$isRecordingCopyPathShortcut) { isRecording in
+            if isRecording {
+                // Setup key monitoring
+                keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+                    if self.shortcutManager.isRecordingCopyPathShortcut {
+                        if self.shortcutManager.recordShortcut(event, forCopyPath: true) {
+                            self.shortcutManager.saveShortcuts()
+                        }
+                        return nil // Consume the event
                     }
-                    return nil // Consume the event
-                } else if self.shortcutManager.isRecordingOpenTerminalShortcut {
-                    if self.shortcutManager.recordShortcut(event, forCopyPath: false) {
-                        self.shortcutManager.saveShortcuts()
-                    }
-                    return nil // Consume the event
+                    return event // Pass through other key events
                 }
-                return event // Pass through other key events
+            } else {
+                // Remove key monitoring
+                if let monitor = keyMonitor {
+                    NSEvent.removeMonitor(monitor)
+                    keyMonitor = nil
+                }
             }
+        }
+        .onReceive(shortcutManager.$isRecordingOpenTerminalShortcut) { isRecording in
+            if isRecording {
+                // Setup key monitoring
+                keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+                    if self.shortcutManager.isRecordingOpenTerminalShortcut {
+                        if self.shortcutManager.recordShortcut(event, forCopyPath: false) {
+                            self.shortcutManager.saveShortcuts()
+                        }
+                        return nil // Consume the event
+                    }
+                    return event // Pass through other key events
+                }
+            } else {
+                // Remove key monitoring
+                if let monitor = keyMonitor {
+                    NSEvent.removeMonitor(monitor)
+                    keyMonitor = nil
+                }
+            }
+        }
+        .onDisappear {
+            // Clean up key monitor when view disappears
+            if let monitor = keyMonitor {
+                NSEvent.removeMonitor(monitor)
+                keyMonitor = nil
+            }
+        }
+        .onAppear {
+            // Only setup key monitoring if we're actually recording
+            // This prevents interference with normal TabView navigation
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("LanguageChanged"))) { _ in
+            // Force view refresh when language changes
+            refreshID = UUID()
         }
     }
     
@@ -343,6 +391,7 @@ struct AdvancedSettingsView: View {
             HStack {
                 Button("reset_to_defaults".localized) {
                     settingsManager.resetToDefaults()
+                    shortcutManager.resetToDefaults()
                 }
                 
                 Spacer()
