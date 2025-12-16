@@ -38,6 +38,7 @@
 "open_terminal_shortcut" = "终端打开：";
 "change" = "更改";
 "shortcut_note" = "注意：快捷键录制功能将在未来版本中提供。";
+"press_shortcut_hint" = "请按下您想要的快捷键组合";
 
 // Advanced Settings
 "debug_mode" = "调试模式";

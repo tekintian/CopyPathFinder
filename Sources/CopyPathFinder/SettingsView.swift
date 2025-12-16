@@ -133,7 +133,7 @@ struct ShortcutSettingsView: View {
                         .frame(width: 120, alignment: .leading)
                     
                     if shortcutManager.isRecordingCopyPathShortcut {
-                        Text("recording")
+                        Text("recording".localized)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
                             .background(Color.orange.opacity(0.2))
@@ -166,7 +166,7 @@ struct ShortcutSettingsView: View {
                         .frame(width: 120, alignment: .leading)
                     
                     if shortcutManager.isRecordingOpenTerminalShortcut {
-                        Text("recording")
+                        Text("recording".localized)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
                             .background(Color.orange.opacity(0.2))
@@ -198,7 +198,7 @@ struct ShortcutSettingsView: View {
             Spacer()
             
             if shortcutManager.isRecordingCopyPathShortcut || shortcutManager.isRecordingOpenTerminalShortcut {
-                Text("Press your desired shortcut combination")
+                Text("press_shortcut_hint".localized)
                     .font(.caption)
                     .foregroundColor(.orange)
                     .multilineTextAlignment(.center)
@@ -265,9 +265,10 @@ struct AdvancedSettingsView: View {
                     }
                 }
                 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(String(format: NSLocalizedString("max_recent_paths", comment: ""), settingsManager.maxRecentPaths))
+                HStack {
+                    Text(String(format: "max_recent_paths".localized, settingsManager.maxRecentPaths))
                         .font(.headline)
+                    Spacer()
                     HStack {
                         Stepper("", value: Binding(
                             get: { settingsManager.maxRecentPaths },

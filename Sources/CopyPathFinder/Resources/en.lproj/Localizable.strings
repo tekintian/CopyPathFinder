@@ -38,6 +38,7 @@
 "open_terminal_shortcut" = "Open in Terminal:";
 "change" = "Change";
 "shortcut_note" = "Note: Shortcut recording will be available in a future update.";
+"press_shortcut_hint" = "Press your desired shortcut combination";
 
 // Advanced Settings
 "debug_mode" = "Debug mode";
