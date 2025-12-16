@@ -307,9 +307,10 @@ struct AdvancedSettingsView: View {
                         settingsManager.saveAllSettings()
                     }
                 
-                VStack(alignment: .leading, spacing: 8) {
+                HStack {
                     Text("log_level".localized)
                         .font(.headline)
+                    Spacer()
                     Picker("select_log_level".localized, selection: $settingsManager.logLevel) {
                         Text("log_error".localized).tag("Error")
                         Text("log_warning".localized).tag("Warning")
