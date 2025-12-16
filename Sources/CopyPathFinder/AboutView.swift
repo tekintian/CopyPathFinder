@@ -23,6 +23,8 @@ struct AboutView: View {
                         .foregroundColor(.secondary)
                     Spacer()
                     Text("tekintian@gmail.com")
+                    Spacer()
+                    Text("QQ: 932256355")
                 }
                 
                 HStack {
@@ -41,7 +43,7 @@ struct AboutView: View {
                     Text("github".localized + ":")
                         .foregroundColor(.secondary)
                     Spacer()
-                    Button("https://github.com/tekintian/CopyPathFinder") {
+                    Button("github.com/tekintian/CopyPathFinder") {
                         if let url = URL(string: "https://github.com/tekintian/CopyPathFinder") {
                             NSWorkspace.shared.open(url)
                         }
