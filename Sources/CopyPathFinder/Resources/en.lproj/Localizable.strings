@@ -1,0 +1,65 @@
+/* English Localization */
+
+// General
+"settings" = "Settings";
+"quit" = "Quit";
+"close" = "Close";
+"save" = "Save";
+"cancel" = "Cancel";
+"recording" = "Recording";
+
+// Menu Items
+"copy_path" = "Copy Path";
+"copy_file_name" = "Copy File Name";
+"open_in_terminal" = "Open in Terminal";
+"about" = "About";
+
+// Settings Tabs
+"general" = "General";
+"shortcuts" = "Shortcuts";
+"advanced" = "Advanced";
+
+// General Settings
+"launch_at_login" = "Launch at login";
+"show_notifications" = "Show notifications";
+"app_icon" = "App Icon";
+"icon_default" = "Default";
+"icon_folder" = "Folder";
+"icon_terminal" = "Terminal";
+"app_language" = "App Language";
+"lang_chinese" = "简体中文";
+"lang_english" = "English";
+
+// Shortcut Settings
+"configure_shortcuts" = "Configure keyboard shortcuts";
+"copy_path_shortcut" = "Copy Path:";
+"open_terminal_shortcut" = "Open in Terminal:";
+"change" = "Change";
+"shortcut_note" = "Note: Shortcut recording will be available in a future update.";
+
+// Advanced Settings
+"debug_mode" = "Debug mode";
+"log_level" = "Log Level";
+"log_error" = "Error";
+"log_warning" = "Warning";
+"log_info" = "Info";
+"log_debug" = "Debug";
+"max_recent_paths" = "Max Recent Paths: %d";
+"recent_paths" = "Recent Paths";
+"no_recent_paths" = "No recent paths";
+"clear_recent_paths" = "Clear Recent Paths";
+"reset_to_defaults" = "Reset to Defaults";
+"save_all" = "Save All";
+
+// About Window
+"app_name" = "CopyPathFinder";
+"app_description" = "A simple and practical macOS path copying tool";
+"author" = "Author";
+"website" = "Website";
+"github" = "GitHub Project";
+
+// Notifications
+"path_copied" = "Path copied";
+"terminal_opened" = "Terminal opened";
+"file_name_copied" = "File name copied";
+"error" = "Error";

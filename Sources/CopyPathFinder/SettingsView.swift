@@ -1,0 +1,324 @@
+import SwiftUI
+
+struct SettingsView: View {
+    @ObservedObject var shortcutManager: ShortcutManager
+    @ObservedObject var settingsManager: SettingsManager
+    @Environment(\.presentationMode) var presentationMode
+    var onClose: (() -> Void)?
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Text("settings".localized)
+                    .font(.title)
+                    .fontWeight(.semibold)
+                Spacer()
+                Button(action: {
+                    onClose?()
+                    presentationMode.wrappedValue.dismiss()
+                }) {
+                    Text("✕")
+                        .foregroundColor(.secondary)
+                        .font(.title)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            .padding()
+            
+            // Content
+            TabView {
+                // General Tab
+                GeneralSettingsView(settingsManager: settingsManager)
+                    .tabItem {
+                        VStack {
+                            Text("⚙️")
+                            Text("general".localized)
+                        }
+                    }
+                
+                // Shortcuts Tab
+                ShortcutSettingsView(shortcutManager: shortcutManager)
+                    .tabItem {
+                        VStack {
+                            Text("⌨️")
+                            Text("shortcuts".localized)
+                        }
+                    }
+                
+                // Advanced Tab
+                AdvancedSettingsView(settingsManager: settingsManager, shortcutManager: shortcutManager)
+                    .tabItem {
+                        VStack {
+                            Text("🔧")
+                            Text("advanced".localized)
+                        }
+                    }
+            }
+            .frame(height: 350)
+        }
+        .frame(width: 500, height: 420)
+    }
+}
+
+struct GeneralSettingsView: View {
+    @ObservedObject var settingsManager: SettingsManager
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 15) {
+            Group {
+                Toggle("launch_at_login".localized, isOn: $settingsManager.launchAtLogin)
+                Toggle("show_notifications".localized, isOn: $settingsManager.showNotifications)
+            }
+            
+            Divider()
+            
+            VStack(alignment: .leading, spacing: 8) {
+                Text("app_icon".localized)
+                    .font(.headline)
+                Picker("icon_default".localized, selection: $settingsManager.appIcon) {
+                    Text("icon_default".localized).tag("default")
+                    Text("icon_folder".localized).tag("folder")
+                    Text("icon_terminal".localized).tag("terminal")
+                }
+            }
+            
+            VStack(alignment: .leading, spacing: 8) {
+                Text("app_language".localized)
+                    .font(.headline)
+                Picker("lang_chinese".localized, selection: $settingsManager.appLanguage) {
+                    Text("lang_chinese".localized).tag("zh-Hans")
+                    Text("lang_english".localized).tag("en")
+                }
+            }
+            
+            Spacer()
+        }
+        .padding()
+    }
+}
+
+struct ShortcutSettingsView: View {
+    @ObservedObject var shortcutManager: ShortcutManager
+    @State private var showingCopyPathRecordingAlert = false
+    @State private var showingTerminalRecordingAlert = false
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Text("configure_shortcuts".localized)
+                .font(.headline)
+                .foregroundColor(.secondary)
+            
+            VStack(alignment: .leading, spacing: 15) {
+                HStack {
+                    Text("copy_path_shortcut".localized)
+                        .frame(width: 120, alignment: .leading)
+                    
+                    if shortcutManager.isRecordingCopyPathShortcut {
+                        Text("recording")
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color.orange.opacity(0.2))
+                            .cornerRadius(6)
+                            .foregroundColor(.orange)
+                    } else {
+                        Text(shortcutManager.copyPathShortcut.displayString)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color(NSColor.controlBackgroundColor))
+                            .cornerRadius(6)
+                            .foregroundColor(.primary)
+                    }
+                    
+                    Spacer()
+                    
+                    Button(shortcutManager.isRecordingCopyPathShortcut ? "cancel".localized : "change".localized) {
+                        if shortcutManager.isRecordingCopyPathShortcut {
+                            shortcutManager.stopRecordingCopyPathShortcut()
+                        } else {
+                            shortcutManager.startRecordingCopyPathShortcut()
+                            setupShortcutRecorder(forCopyPath: true)
+                        }
+                    }
+                    .foregroundColor(shortcutManager.isRecordingCopyPathShortcut ? .orange : .blue)
+                }
+                
+                HStack {
+                    Text("open_terminal_shortcut".localized)
+                        .frame(width: 120, alignment: .leading)
+                    
+                    if shortcutManager.isRecordingOpenTerminalShortcut {
+                        Text("recording")
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color.orange.opacity(0.2))
+                            .cornerRadius(6)
+                            .foregroundColor(.orange)
+                    } else {
+                        Text(shortcutManager.openTerminalShortcut.displayString)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color(NSColor.controlBackgroundColor))
+                            .cornerRadius(6)
+                            .foregroundColor(.primary)
+                    }
+                    
+                    Spacer()
+                    
+                    Button(shortcutManager.isRecordingOpenTerminalShortcut ? "cancel".localized : "change".localized) {
+                        if shortcutManager.isRecordingOpenTerminalShortcut {
+                            shortcutManager.stopRecordingOpenTerminalShortcut()
+                        } else {
+                            shortcutManager.startRecordingOpenTerminalShortcut()
+                            setupShortcutRecorder(forCopyPath: false)
+                        }
+                    }
+                    .foregroundColor(shortcutManager.isRecordingOpenTerminalShortcut ? .orange : .blue)
+                }
+            }
+            
+            Spacer()
+            
+            if shortcutManager.isRecordingCopyPathShortcut || shortcutManager.isRecordingOpenTerminalShortcut {
+                Text("Press your desired shortcut combination")
+                    .font(.caption)
+                    .foregroundColor(.orange)
+                    .multilineTextAlignment(.center)
+            } else {
+                Text("shortcut_note".localized)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding()
+        .onAppear {
+            // Setup global key monitoring for shortcut recording
+            NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+                if self.shortcutManager.isRecordingCopyPathShortcut {
+                    if self.shortcutManager.recordShortcut(event, forCopyPath: true) {
+                        self.shortcutManager.saveShortcuts()
+                    }
+                    return nil // Consume the event
+                } else if self.shortcutManager.isRecordingOpenTerminalShortcut {
+                    if self.shortcutManager.recordShortcut(event, forCopyPath: false) {
+                        self.shortcutManager.saveShortcuts()
+                    }
+                    return nil // Consume the event
+                }
+                return event // Pass through other key events
+            }
+        }
+    }
+    
+    private func setupShortcutRecorder(forCopyPath: Bool) {
+        // This will be handled by the key monitor in onAppear
+        // The recording state is already set by the button action
+    }
+}
+
+struct AdvancedSettingsView: View {
+    @ObservedObject var settingsManager: SettingsManager
+    @ObservedObject var shortcutManager: ShortcutManager
+    
+    init(settingsManager: SettingsManager, shortcutManager: ShortcutManager) {
+        self.settingsManager = settingsManager
+        self._shortcutManager = ObservedObject(wrappedValue: shortcutManager)
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 15) {
+            Group {
+                Toggle("debug_mode".localized, isOn: $settingsManager.enableDebugMode)
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("log_level".localized)
+                        .font(.headline)
+                    Picker("log_level".localized, selection: $settingsManager.logLevel) {
+                        Text("log_error".localized).tag("Error")
+                        Text("log_warning".localized).tag("Warning")
+                        Text("log_info".localized).tag("Info")
+                        Text("log_debug".localized).tag("Debug")
+                    }
+                }
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(String(format: NSLocalizedString("max_recent_paths", comment: ""), settingsManager.maxRecentPaths))
+                        .font(.headline)
+                    HStack {
+                        Stepper("", value: Binding(
+                            get: { settingsManager.maxRecentPaths },
+                            set: { settingsManager.maxRecentPaths = $0 }
+                        ), in: 5...50, step: 5)
+                        Text("\(settingsManager.maxRecentPaths)")
+                            .frame(width: 40)
+                    }
+                }
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("recent_paths".localized)
+                            .font(.headline)
+                        Spacer()
+                        if !settingsManager.recentPaths.isEmpty {
+                            Button("clear_recent_paths".localized) {
+                                settingsManager.recentPaths = []
+                            }
+                            .font(.caption)
+                        }
+                    }
+                    
+                    if settingsManager.recentPaths.isEmpty {
+                        Text("no_recent_paths".localized)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    } else {
+                        VStack(alignment: .leading, spacing: 4) {
+                            ForEach(Array(settingsManager.recentPaths.enumerated()), id: \.offset) { index, path in
+                                HStack {
+                                    Text("\(index + 1).")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                        .frame(width: 20, alignment: .leading)
+                                    Text(path)
+                                        .font(.caption)
+                                        .foregroundColor(.primary)
+                                        .lineLimit(1)
+                                        .truncationMode(.middle)
+                                    Spacer()
+                                }
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 2)
+                                .background(Color(NSColor.controlBackgroundColor))
+                                .cornerRadius(4)
+                                .onTapGesture {
+                                    // Copy path to clipboard when clicked
+                                    NSPasteboard.general.clearContents()
+                                    NSPasteboard.general.setString(path, forType: .string)
+                                }
+                            }
+                        }
+                        .frame(maxHeight: 120)
+                    }
+                }
+            }
+            
+            Divider()
+            
+            HStack {
+                Button("reset_to_defaults".localized) {
+                    settingsManager.resetToDefaults()
+                }
+                
+                Spacer()
+                
+                Button("save_all".localized) {
+                    settingsManager.saveAllSettings()
+                    shortcutManager.saveShortcuts()
+                }
+            }
+            
+            Spacer()
+        }
+        .padding()
+    }
+}

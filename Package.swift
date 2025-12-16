@@ -3,6 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "CopyPathFinder",
+    defaultLocalization: "zh-Hans",
     platforms: [
         .macOS(.v10_15)
     ],
@@ -17,7 +18,10 @@ let package = Package(
         .target(
             name: "CopyPathFinder",
             dependencies: [],
-            exclude: ["Info.plist"]
+            exclude: ["Info.plist"],
+            resources: [
+                .process("Resources")
+            ]
         )
     ]
 )

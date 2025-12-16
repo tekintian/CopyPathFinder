@@ -25,3 +25,5 @@ Package.resolved
 
 # Logs
 *.log
+*.code-workspace
+/CopyPathFinder.app

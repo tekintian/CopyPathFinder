@@ -1,0 +1,65 @@
+/* Chinese Simplified Localization */
+
+// General
+"settings" = "设置";
+"quit" = "退出";
+"close" = "关闭";
+"save" = "保存";
+"cancel" = "取消";
+"recording" = "录制中";
+
+// Menu Items
+"copy_path" = "拷贝路径";
+"copy_file_name" = "拷贝文件名";
+"open_in_terminal" = "在终端中打开";
+"about" = "关于";
+
+// Settings Tabs
+"general" = "通用";
+"shortcuts" = "快捷键";
+"advanced" = "高级";
+
+// General Settings
+"launch_at_login" = "登录时启动";
+"show_notifications" = "显示通知";
+"app_icon" = "应用图标";
+"icon_default" = "默认";
+"icon_folder" = "文件夹";
+"icon_terminal" = "终端";
+"app_language" = "应用语言";
+"lang_chinese" = "简体中文";
+"lang_english" = "English";
+
+// Shortcut Settings
+"configure_shortcuts" = "配置键盘快捷键";
+"copy_path_shortcut" = "拷贝路径：";
+"open_terminal_shortcut" = "终端打开：";
+"change" = "更改";
+"shortcut_note" = "注意：快捷键录制功能将在未来版本中提供。";
+
+// Advanced Settings
+"debug_mode" = "调试模式";
+"log_level" = "日志级别";
+"log_error" = "错误";
+"log_warning" = "警告";
+"log_info" = "信息";
+"log_debug" = "调试";
+"max_recent_paths" = "最大最近路径数：%d";
+"recent_paths" = "最近路径";
+"no_recent_paths" = "暂无最近路径";
+"clear_recent_paths" = "清除最近路径";
+"reset_to_defaults" = "重置为默认值";
+"save_all" = "保存全部";
+
+// About Window
+"app_name" = "CopyPathFinder";
+"app_description" = "一个简单实用的macOS路径拷贝工具";
+"author" = "作者";
+"website" = "个人网站";
+"github" = "GitHub项目";
+
+// Notifications
+"path_copied" = "路径已拷贝";
+"terminal_opened" = "终端已打开";
+"file_name_copied" = "文件名已拷贝";
+"error" = "错误";
