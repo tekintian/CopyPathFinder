@@ -23,10 +23,12 @@
 "launch_at_login" = "Launch at login";
 "show_notifications" = "Show notifications";
 "app_icon" = "App Icon";
+"select_icon" = "Select icon";
 "icon_default" = "Default";
 "icon_folder" = "Folder";
 "icon_terminal" = "Terminal";
 "app_language" = "App Language";
+"select_language" = "Select language";
 "lang_chinese" = "简体中文";
 "lang_english" = "English";
 
@@ -40,6 +42,7 @@
 // Advanced Settings
 "debug_mode" = "Debug mode";
 "log_level" = "Log Level";
+"select_log_level" = "Select log level";
 "log_error" = "Error";
 "log_warning" = "Warning";
 "log_info" = "Info";

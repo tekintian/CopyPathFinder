@@ -3,7 +3,7 @@ import SwiftUI
 import UserNotifications
 import Combine
 
-class AppDelegate: NSObject, NSApplicationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     var statusItem: NSStatusItem?
     var popover: NSPopover?
     var settingsPopover: NSPopover?
@@ -109,11 +109,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func updateLanguage() {
+        // Update LocalizationManager with new language
+        if let language = LocalizationManager.Language(rawValue: settingsManager.appLanguage) {
+            LocalizationManager.shared.setLanguage(language)
+        }
+        
         // Note: For full language switching, the app would need to restart
         // For now, this just saves the preference for future launches
         // Temporarily disabled to avoid AppleLanguages issue
         // UserDefaults.standard.set([settingsManager.appLanguage], forKey: "AppleLanguages")
-        print("Language would be set to: \(settingsManager.appLanguage)")
+        print("Language set to: \(settingsManager.appLanguage)")
     }
     
     private func requestNotificationPermission() {
@@ -162,20 +167,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func showSettings() {
         if settingsPopover == nil {
             settingsPopover = NSPopover()
-            var settingsView = SettingsView(shortcutManager: shortcutManager, settingsManager: settingsManager)
+            let settingsView = SettingsView(
+                shortcutManager: shortcutManager, 
+                settingsManager: settingsManager,
+                onClose: { [weak self] in
+                    self?.settingsPopover?.performClose(nil)
+                    self?.settingsPopover = nil
+                }
+            )
             let contentView = NSHostingView(rootView: settingsView)
             
-            // Set close callback
-            settingsView.onClose = { [weak self] in
-                self?.settingsPopover?.performClose(nil)
-                self?.settingsPopover = nil
-            }
-            
-            contentView.frame = NSRect(x: 0, y: 0, width: 450, height: 480)
+            contentView.frame = NSRect(x: 0, y: 0, width: 500, height: 450)
             settingsPopover?.contentViewController = NSViewController()
             settingsPopover?.contentViewController?.view = contentView
-            settingsPopover?.contentSize = NSSize(width: 450, height: 480)
-            settingsPopover?.behavior = .transient
+            settingsPopover?.contentSize = NSSize(width: 500, height: 450)
+            settingsPopover?.behavior = .semitransient
+            settingsPopover?.animates = true
+            settingsPopover?.delegate = self
         }
         
         if let button = statusItem?.button {
@@ -291,6 +299,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
                 print("Notification error: \(error)")
+            }
+        }
+    }
+    
+    // MARK: - NSPopoverDelegate
+    
+    func popoverDidClose(_ notification: Notification) {
+        if let popover = notification.object as? NSPopover {
+            if popover === settingsPopover {
+                settingsPopover = nil
+            } else if popover === aboutPopover {
+                aboutPopover = nil
             }
         }
     }

@@ -3,12 +3,12 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var shortcutManager: ShortcutManager
     @ObservedObject var settingsManager: SettingsManager
-    @Environment(\.presentationMode) var presentationMode
     var onClose: (() -> Void)?
+    @State private var refreshID = UUID()
     
     var body: some View {
         VStack(spacing: 0) {
-            // Header
+            // Header with title and close button
             HStack {
                 Text("settings".localized)
                     .font(.title)
@@ -16,11 +16,10 @@ struct SettingsView: View {
                 Spacer()
                 Button(action: {
                     onClose?()
-                    presentationMode.wrappedValue.dismiss()
                 }) {
                     Text("✕")
-                        .foregroundColor(.secondary)
                         .font(.title)
+                        .foregroundColor(.secondary)
                 }
                 .buttonStyle(PlainButtonStyle())
             }
@@ -55,9 +54,14 @@ struct SettingsView: View {
                         }
                     }
             }
-            .frame(height: 350)
+            .frame(height: 380)
         }
-        .frame(width: 500, height: 420)
+        .frame(width: 500, height: 450)
+        .id(refreshID)
+        .onReceive(settingsManager.$appLanguage) { _ in
+            // Force view refresh when language changes
+            refreshID = UUID()
+        }
     }
 }
 
@@ -68,7 +72,13 @@ struct GeneralSettingsView: View {
         VStack(alignment: .leading, spacing: 15) {
             Group {
                 Toggle("launch_at_login".localized, isOn: $settingsManager.launchAtLogin)
+                    .onReceive(settingsManager.$launchAtLogin) { _ in
+                        settingsManager.saveAllSettings()
+                    }
                 Toggle("show_notifications".localized, isOn: $settingsManager.showNotifications)
+                    .onReceive(settingsManager.$showNotifications) { _ in
+                        settingsManager.saveAllSettings()
+                    }
             }
             
             Divider()
@@ -76,19 +86,27 @@ struct GeneralSettingsView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("app_icon".localized)
                     .font(.headline)
-                Picker("icon_default".localized, selection: $settingsManager.appIcon) {
+                Picker("select_icon".localized, selection: $settingsManager.appIcon) {
                     Text("icon_default".localized).tag("default")
                     Text("icon_folder".localized).tag("folder")
                     Text("icon_terminal".localized).tag("terminal")
+                }
+                .onReceive(settingsManager.$appIcon) { _ in
+                    settingsManager.saveAllSettings()
                 }
             }
             
             VStack(alignment: .leading, spacing: 8) {
                 Text("app_language".localized)
                     .font(.headline)
-                Picker("lang_chinese".localized, selection: $settingsManager.appLanguage) {
+                Picker("select_language".localized, selection: $settingsManager.appLanguage) {
                     Text("lang_chinese".localized).tag("zh-Hans")
                     Text("lang_english".localized).tag("en")
+                }
+                .onReceive(settingsManager.$appLanguage) { newLanguage in
+                    settingsManager.saveAllSettings()
+                    // Force UI refresh by updating localization
+                    LocalizationManager.shared.setLanguage(LocalizationManager.Language(rawValue: newLanguage) ?? .chineseSimplified)
                 }
             }
             
@@ -229,15 +247,21 @@ struct AdvancedSettingsView: View {
         VStack(alignment: .leading, spacing: 15) {
             Group {
                 Toggle("debug_mode".localized, isOn: $settingsManager.enableDebugMode)
+                    .onReceive(settingsManager.$enableDebugMode) { _ in
+                        settingsManager.saveAllSettings()
+                    }
                 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("log_level".localized)
                         .font(.headline)
-                    Picker("log_level".localized, selection: $settingsManager.logLevel) {
+                    Picker("select_log_level".localized, selection: $settingsManager.logLevel) {
                         Text("log_error".localized).tag("Error")
                         Text("log_warning".localized).tag("Warning")
                         Text("log_info".localized).tag("Info")
                         Text("log_debug".localized).tag("Debug")
+                    }
+                    .onReceive(settingsManager.$logLevel) { _ in
+                        settingsManager.saveAllSettings()
                     }
                 }
                 
@@ -247,7 +271,10 @@ struct AdvancedSettingsView: View {
                     HStack {
                         Stepper("", value: Binding(
                             get: { settingsManager.maxRecentPaths },
-                            set: { settingsManager.maxRecentPaths = $0 }
+                            set: { newValue in
+                                settingsManager.maxRecentPaths = newValue
+                                settingsManager.saveAllSettings()
+                            }
                         ), in: 5...50, step: 5)
                         Text("\(settingsManager.maxRecentPaths)")
                             .frame(width: 40)

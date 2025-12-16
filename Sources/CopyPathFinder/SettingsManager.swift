@@ -42,7 +42,12 @@ class SettingsManager: ObservableObject {
         // Load from UserDefaults safely
         loadSettings()
         
-        print("SettingsManager initialized")
+        // Set initial language in LocalizationManager
+        if let language = LocalizationManager.Language(rawValue: self.appLanguage) {
+            LocalizationManager.shared.setLanguage(language)
+        }
+        
+        print("SettingsManager initialized with language: \(self.appLanguage)")
     }
     
     private func loadSettings() {
