@@ -91,16 +91,58 @@ fi
 # 设置可执行权限
 chmod +x CopyPathFinder.app/Contents/MacOS/CopyPathFinder
 
-# 复制资源文件
-echo "6. 复制资源文件..."
+# 复制必要的资源文件
+echo "6. 复制必要的资源文件..."
 if [ -d "Assets" ]; then
-    cp -r Assets/* CopyPathFinder.app/Contents/Resources/
+    # 只复制应用实际使用的资源文件
+    # 应用图标 (Info.plist中CFBundleIconFile指定)
+    if [ -f "Assets/AppIcon.icns" ]; then
+        cp "Assets/AppIcon.icns" CopyPathFinder.app/Contents/Resources/
+        echo "  ✅ 复制应用图标: AppIcon.icns"
+    fi
+    
+    # 状态栏图标
+    if [ -f "Assets/StatusIcon.png" ]; then
+        cp "Assets/StatusIcon.png" CopyPathFinder.app/Contents/Resources/
+        echo "  ✅ 复制状态栏图标: StatusIcon.png"
+    fi
+    
+    # Retina状态栏图标
+    if [ -f "Assets/StatusIcon@2x.png" ]; then
+        cp "Assets/StatusIcon@2x.png" CopyPathFinder.app/Contents/Resources/
+        echo "  ✅ 复制Retina状态栏图标: StatusIcon@2x.png"
+    fi
+else
+    echo "  ⚠️  Assets目录不存在，跳过资源复制"
 fi
 
 # 复制本地化资源
 echo "7. 复制本地化资源..."
 if [ -d "Sources/CopyPathFinder/Resources" ]; then
     cp -r Sources/CopyPathFinder/Resources/* CopyPathFinder.app/Contents/Resources/
+    echo "  ✅ 复制本地化文件"
+else
+    echo "  ⚠️  本地化资源目录不存在"
+fi
+
+# 验证资源完整性
+echo "7.1 验证资源完整性..."
+REQUIRED_RESOURCES=("AppIcon.icns" "StatusIcon.png" "StatusIcon@2x.png")
+MISSING_RESOURCES=()
+
+for resource in "${REQUIRED_RESOURCES[@]}"; do
+    if [ ! -f "CopyPathFinder.app/Contents/Resources/$resource" ]; then
+        MISSING_RESOURCES+=("$resource")
+    fi
+done
+
+if [ ${#MISSING_RESOURCES[@]} -eq 0 ]; then
+    echo "  ✅ 所有必需资源已复制"
+else
+    echo "  ⚠️  缺少资源文件:"
+    for missing in "${MISSING_RESOURCES[@]}"; do
+        echo "     - $missing"
+    done
 fi
 
 # 验证应用
