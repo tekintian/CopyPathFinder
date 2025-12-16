@@ -317,6 +317,7 @@ struct AdvancedSettingsView: View {
                         Text("log_info".localized).tag("Info")
                         Text("log_debug".localized).tag("Debug")
                     }
+                    .frame(width: 180)
                     .onReceive(settingsManager.$logLevel) { _ in
                         settingsManager.saveAllSettings()
                     }
