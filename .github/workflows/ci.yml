@@ -95,6 +95,15 @@ jobs:
           cp Assets/StatusIcon@2x.png artifact/Intel/CopyPathFinder.app/Contents/Resources/
         fi
         
+        # Copy localization files to Intel version
+        echo "🌍 Copying localization files to Intel version..."
+        if [ -d "Sources/CopyPathFinder/Resources" ]; then
+          cp -r Sources/CopyPathFinder/Resources/* artifact/Intel/CopyPathFinder.app/Contents/Resources/
+          echo "✅ Intel localization files copied"
+        else
+          echo "⚠️ Sources/CopyPathFinder/Resources directory not found"
+        fi
+        
         # Create ARM64 version directory
         echo "📦 Packaging ARM64 version..."
         mkdir -p artifact/ARM64/CopyPathFinder.app/Contents/MacOS
@@ -114,6 +123,15 @@ jobs:
         fi
         if [ -f "Assets/StatusIcon@2x.png" ]; then
           cp Assets/StatusIcon@2x.png artifact/ARM64/CopyPathFinder.app/Contents/Resources/
+        fi
+        
+        # Copy localization files to ARM64 version
+        echo "🌍 Copying localization files to ARM64 version..."
+        if [ -d "Sources/CopyPathFinder/Resources" ]; then
+          cp -r Sources/CopyPathFinder/Resources/* artifact/ARM64/CopyPathFinder.app/Contents/Resources/
+          echo "✅ ARM64 localization files copied"
+        else
+          echo "⚠️ Sources/CopyPathFinder/Resources directory not found"
         fi
         
         # Verify Info.plist versions

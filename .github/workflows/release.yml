@@ -100,6 +100,17 @@ jobs:
           fi
         done
         
+        # Copy localization files to both versions
+        echo "🌍 Copying localization files to all versions..."
+        if [ -d "Sources/CopyPathFinder/Resources" ]; then
+          for arch in Intel ARM64; do
+            cp -r Sources/CopyPathFinder/Resources/* Release/$arch/CopyPathFinder.app/Contents/Resources/
+            echo "✅ $arch localization files copied"
+          done
+        else
+          echo "⚠️ Sources/CopyPathFinder/Resources directory not found"
+        fi
+        
     - name: Code Sign (Self-Signed)
       run: |
         # Apply ad-hoc signatures to both versions
