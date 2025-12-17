@@ -11,7 +11,7 @@ env:
 
 jobs:
   build:
-    runs-on: macos-13
+    runs-on: macos-14
     
     steps:
     - name: Checkout
@@ -32,8 +32,8 @@ jobs:
         # Set minimum macOS version for compatibility
         export MACOSX_DEPLOYMENT_TARGET=10.15
         
-        # Build universal binary for Intel and Apple Silicon
-        swift build -c release --arch x86_64 --arch arm64
+        # Build universal binary for Intel and Apple Silicon with explicit target
+        swift build -c release --triple x86_64-apple-macos10.15 --triple arm64-apple-macos10.15
       
     - name: Test
       run: |
@@ -108,7 +108,7 @@ jobs:
         
   release:
     needs: build
-    runs-on: macos-13
+    runs-on: macos-14
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     
     steps:
