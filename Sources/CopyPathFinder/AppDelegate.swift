@@ -223,7 +223,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             
             showNotification("path_copied".localized, message: path)
         } catch {
-            showNotification("error".localized, message: error.localizedDescription)
+            let errorMessage = extractErrorMessage(error)
+            showNotification("error".localized, message: errorMessage)
+            
+            // If it's a permission issue, also try to open System Preferences
+            if errorMessage.contains("授权") || errorMessage.contains("permission") {
+                showPermissionHelp()
+            }
         }
     }
     
@@ -237,7 +243,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             
             showNotification("terminal_opened".localized, message: path)
         } catch {
-            showNotification("error".localized, message: error.localizedDescription)
+            let errorMessage = extractErrorMessage(error)
+            showNotification("error".localized, message: errorMessage)
+            
+            // If it's a permission issue, show help
+            if errorMessage.contains("授权") || errorMessage.contains("permission") {
+                showPermissionHelp()
+            }
         }
     }
     
@@ -249,7 +261,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             NSPasteboard.general.setString(fileName, forType: .string)
             showNotification("file_name_copied".localized, message: fileName)
         } catch {
-            showNotification("error".localized, message: error.localizedDescription)
+            let errorMessage = extractErrorMessage(error)
+            showNotification("error".localized, message: errorMessage)
+            
+            // If it's a permission issue, show help
+            if errorMessage.contains("授权") || errorMessage.contains("permission") {
+                showPermissionHelp()
+            }
         }
     }
     
@@ -299,6 +317,50 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
                 print("Notification error: \(error)")
+            }
+        }
+    }
+    
+    private func extractErrorMessage(_ error: Error) -> String {
+        if let nsError = error as NSError? {
+            // If we have a custom error message, use it
+            if let customMessage = nsError.userInfo[NSLocalizedDescriptionKey] as? String {
+                return customMessage
+            }
+            
+            // Check for specific error codes
+            switch nsError.code {
+            case -1743: // Permission denied
+                return "需要 Apple Events 权限。请在系统设置中授权控制 Finder。"
+            case -1719: // Not authorized
+                return "未授权访问。请在系统设置 > 隐私与安全性 > 自动化中允许控制 Finder。"
+            default:
+                return nsError.localizedDescription
+            }
+        }
+        return error.localizedDescription
+    }
+    
+    private func showPermissionHelp() {
+        let alert = NSAlert()
+        alert.messageText = "需要 Apple Events 权限"
+        alert.informativeText = """
+        要使用 CopyPathFinder 拷贝路径，需要授予以下权限：
+        
+        1. 打开 系统设置 > 隐私与安全性 > 自动化
+        2. 找到 CopyPathFinder 并允许控制 Finder
+        
+        如果问题仍然存在，请检查 辅助功能 权限。
+        """
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "打开系统设置")
+        alert.addButton(withTitle: "稍后")
+        
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn {
+            // Try to open System Preferences
+            if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation") {
+                NSWorkspace.shared.open(url)
             }
         }
     }
