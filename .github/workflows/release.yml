@@ -140,10 +140,10 @@ jobs:
     - name: Generate Checksum
       run: |
         # Generate SHA256 checksums for all release files
-        sha256sum CopyPathFinder-Intel.dmg > CopyPathFinder-Intel.dmg.sha256
-        sha256sum CopyPathFinder-ARM64.dmg > CopyPathFinder-ARM64.dmg.sha256
-        sha256sum CopyPathFinder-Intel.zip > CopyPathFinder-Intel.zip.sha256
-        sha256sum CopyPathFinder-ARM64.zip > CopyPathFinder-ARM64.zip.sha256
+        shasum -a 256 CopyPathFinder-Intel.dmg > CopyPathFinder-Intel.dmg.sha256
+        shasum -a 256 CopyPathFinder-ARM64.dmg > CopyPathFinder-ARM64.dmg.sha256
+        shasum -a 256 CopyPathFinder-Intel.zip > CopyPathFinder-Intel.zip.sha256
+        shasum -a 256 CopyPathFinder-ARM64.zip > CopyPathFinder-ARM64.zip.sha256
         
     - name: Generate Release Notes
       run: |
@@ -209,8 +209,8 @@ jobs:
         
         **📊 文件校验**
         - SHA256 校验和文件已提供，请验证文件完整性
-        - `sha256sum -c CopyPathFinder-Intel.dmg.sha256` (Intel 版本)
-        - `sha256sum -c CopyPathFinder-ARM64.dmg.sha256` (ARM64 版本)
+        - `shasum -a 256 -c CopyPathFinder-Intel.dmg.sha256` (Intel 版本)
+        - `shasum -a 256 -c CopyPathFinder-ARM64.dmg.sha256` (ARM64 版本)
         
         **⚠️ 免责声明**
         本软件仅供学习和个人使用，使用风险自负。
