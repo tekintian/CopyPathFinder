@@ -60,7 +60,7 @@ struct SettingsView: View {
             }
             .frame(height: 380)
         }
-        .frame(width: 500, height: 450)
+        .frame(width: 500, height: 430)
         .id(refreshID)
         .onReceive(settingsManager.$appLanguage) { _ in
             // Force view refresh when language changes

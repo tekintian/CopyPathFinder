@@ -1,7 +1,7 @@
 import Foundation
 
 class LaunchAtLoginManager {
-    private let bundleIdentifier = Bundle.main.bundleIdentifier ?? "com.tekin.CopyPathFinder"
+    private let bundleIdentifier = Bundle.main.bundleIdentifier ?? "cn.tekin.copypathfinder"
     
     var isEnabled: Bool {
         get {

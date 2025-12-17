@@ -112,7 +112,7 @@
 2. **使用 Notarization（公证）**
    ```bash
    xcrun altool --notarize-app \
-     --primary-bundle-id "com.copypathfinder.app" \
+     --primary-bundle-id "cn.tekin.copypathfinder" \
      --username "your@email.com" \
      --password "app-specific-password" \
      --file "CopyPathFinder.dmg"

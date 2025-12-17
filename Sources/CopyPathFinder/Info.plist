@@ -12,7 +12,7 @@
     <key>CFBundleExecutable</key>
     <string>CopyPathFinder</string>
     <key>CFBundleIdentifier</key>
-    <string>com.copypathfinder.app</string>
+    <string>cn.tekin.copypathfinder</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
