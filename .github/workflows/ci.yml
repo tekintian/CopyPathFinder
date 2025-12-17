@@ -41,19 +41,18 @@ jobs:
           --triple x86_64-apple-macos10.15 \
           -Xlinker -platform_version -Xlinker macos -Xlinker 10.15 -Xlinker 10.15
         
-        # Copy Intel binary
+        # Immediately copy and rename Intel binary
         cp .build/release/CopyPathFinder .build/release/CopyPathFinder-x86_64
         
-        # Clean and build ARM64 version
-        swift package clean
-        
-        echo "🏗️ Building ARM64 version..."
+        # Create separate directory for ARM64 build
+        mkdir -p .build-arm64/release
         swift build -c release \
           --triple arm64-apple-macos11.0 \
-          -Xlinker -platform_version -Xlinker macos -Xlinker 11.0 -Xlinker 11.0
+          -Xlinker -platform_version -Xlinker macos -Xlinker 11.0 -Xlinker 11.0 \
+          --build-path .build-arm64
         
-        # Copy ARM64 binary
-        cp .build/release/CopyPathFinder .build/release/CopyPathFinder-arm64
+        # Copy ARM64 binary to standard location
+        cp .build-arm64/release/CopyPathFinder .build/release/CopyPathFinder-arm64
         
         # Verify binary compatibility
         echo "🔍 Checking Intel binary compatibility:"
@@ -61,6 +60,10 @@ jobs:
         
         echo "🔍 Checking ARM64 binary compatibility:"
         otool -l .build/release/CopyPathFinder-arm64 | grep -A5 "LC_VERSION_MIN_MACOSX" || echo "No LC_VERSION_MIN_MACOSX found"
+        
+        # List available binaries
+        echo "📋 Available binaries:"
+        ls -la .build/release/
       
     - name: Test
       run: |
