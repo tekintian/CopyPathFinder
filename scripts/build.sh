@@ -58,6 +58,15 @@ if [ -f "$PROJECT_DIR/Assets/StatusIcon@2x.png" ]; then
     cp "$PROJECT_DIR/Assets/StatusIcon@2x.png" "$RESOURCES_DIR/"
 fi
 
+# Copy localization files
+echo "🌐 Copying localization files..."
+if [ -d "$PROJECT_DIR/Sources/CopyPathFinder/Resources" ]; then
+    cp -R "$PROJECT_DIR/Sources/CopyPathFinder/Resources/"* "$RESOURCES_DIR/"
+    echo "   ✅ Localization files copied"
+else
+    echo "   ⚠️  Warning: Resources directory not found"
+fi
+
 echo "✅ Build completed!"
 echo "App bundle: $APP_DIR"
 

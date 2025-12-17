@@ -6,7 +6,7 @@
 set -e
 
 # 解析命令行参数
-BUILD_CONFIG="release"
+BUILD_CONFIG="debug"
 while [[ $# -gt 0 ]]; do
     case $1 in
         -r|--release)
