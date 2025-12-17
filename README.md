@@ -6,7 +6,7 @@
 [![Release](https://img.shields.io/github/release/tekintian/CopyPathFinder.svg)](https://github.com/tekintian/CopyPathFinder/releases)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Swift](https://img.shields.io/badge/Swift-5.3+-orange.svg)](https://swift.org)
-[![macOS](https://img.shields.io/badge/macOS-10.15+-brightgreen.svg)](https://www.apple.com/macos/)
+[![macOS](https://img.shields.io/badge/macOS-10.15%2B--11.0%2B-brightgreen.svg)](https://www.apple.com/macos/)
 
 **🚀 一键复制文件路径 | ⚡ 效率提升神器 | 🍎 Mac 原生体验**
 
@@ -167,16 +167,43 @@ Finder 选择文件  →  按下 ⌘⇧C  →  路径复制到剪贴板
 | 📊 **Office Work** | Share file locations in emails | ⚡⚡ |
 | 🔧 **Tech Support** | Help users locate config files | ⚡⚡⚡ |
 
+## 🏗️ 架构支持 | Architecture Support
+
+Copy Path Finder 支持多架构，为不同 Mac 硬件提供最佳性能和兼容性：
+
+### 📋 选择合适的版本
+
+| 架构版本 | 支持系统 | 适用设备 | 下载文件 |
+|---------|---------|---------|---------|
+| **Intel (x86_64)** | macOS 10.15+ | Intel 芯片 Mac | `CopyPathFinder-Intel.dmg` |
+| **Apple Silicon (ARM64)** | macOS 11.0+ | M123 芯片 Mac | `CopyPathFinder-ARM64.dmg` |
+
+### 🎯 如何选择？
+
+- **Intel Mac** (2019 年及之前型号): 下载 **Intel 版本**
+- **Apple Silicon Mac** (M123 芯片): 下载 **ARM64 版本**
+- **不确定设备型号**: 点击 Apple 菜单 → "关于本机" → 查看"芯片"或"处理器"信息
+
+### 🚀 性能优势
+
+- **Intel 版本**: 完全兼容 macOS 10.15 Catalina 及更新版本
+- **ARM64 版本**: 为 Apple Silicon 优化，性能更佳，功耗更低
+- **分别构建**: 避免通用二进制文件的兼容性问题，确保最佳稳定性
+
+---
+
 ## Installation
 
 ### 📦 Download Release (Recommended)
 
 Download the latest release from [GitHub Releases](https://github.com/tekintian/CopyPathFinder/releases):
 
-- **DMG Package** (推荐): 拖拽安装到 Applications 文件夹
-- **ZIP Archive**: 解压后复制到 Applications 文件夹
+- **Intel 版本**: `CopyPathFinder-Intel.dmg` (适用于 Intel 芯片 Mac)
+- **ARM64 版本**: `CopyPathFinder-ARM64.dmg` (适用于 Apple Silicon Mac)
 
 > ⚠️ **安全提示**: 应用使用自签名证书，首次运行需在"系统设置 > 隐私与安全性"中允许运行
+> 
+> 💡 **架构提示**: 请根据你的 Mac 芯片选择对应的版本，确保最佳兼容性
 
 ### 🔧 Build from Source
 
@@ -209,7 +236,8 @@ brew install --cask copypathfinder
 
 ## Requirements
 
-- macOS 13.0 or later
+- **Intel 版本**: macOS 10.15 (Catalina) 或更高版本
+- **ARM64 版本**: macOS 11.0 (Big Sur) 或更高版本
 - Apple Events permission for Finder access
 
 ## Development
