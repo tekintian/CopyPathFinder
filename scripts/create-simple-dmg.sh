@@ -24,11 +24,11 @@ echo "📱 App size: ${APP_SIZE}MB"
 # Create temporary directory
 TEMP_DIR="/tmp/dmg_simple_$$"
 rm -rf "$TEMP_DIR"
-mkdir -p "$TEMP_DIR/CopyPathFinder"
+mkdir -p "$TEMP_DIR"
 
-# Copy app to temporary directory
+# Copy app to temporary directory (root level)
 echo "📦 Copying app..."
-cp -R "$APP_PATH" "$TEMP_DIR/CopyPathFinder/"
+cp -R "$APP_PATH" "$TEMP_DIR/"
 
 # Create Applications symbolic link
 echo "🔗 Creating Applications link..."

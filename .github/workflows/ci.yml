@@ -35,20 +35,32 @@ jobs:
         # Clean previous builds
         swift package clean
         
-        # Build with explicit target flags (fixed linker syntax)
+        # Build Intel version for macOS 10.15 compatibility
+        echo "🏗️ Building Intel (x86_64) version..."
         swift build -c release \
-          -Xswiftc -target -Xswiftc x86_64-apple-macos10.15 \
-          -Xswiftc -target -Xswiftc arm64-apple-macos10.15 \
+          --triple x86_64-apple-macos10.15 \
           -Xlinker -platform_version -Xlinker macos -Xlinker 10.15 -Xlinker 10.15
         
-        # Verify binary compatibility
-        echo "🔍 Checking binary compatibility:"
-        otool -l .build/release/CopyPathFinder | grep -A5 "LC_VERSION_MIN_MACOSX" || echo "No LC_VERSION_MIN_MACOSX found"
+        # Copy Intel binary
+        cp .build/release/CopyPathFinder .build/release/CopyPathFinder-x86_64
         
-        # Check minimum version in the binary
-        if command -v vtool >/dev/null 2>&1; then
-          vtool -show .build/release/CopyPathFinder | grep -A5 "minos" || echo "No minos found"
-        fi
+        # Clean and build ARM64 version
+        swift package clean
+        
+        echo "🏗️ Building ARM64 version..."
+        swift build -c release \
+          --triple arm64-apple-macos11.0 \
+          -Xlinker -platform_version -Xlinker macos -Xlinker 11.0 -Xlinker 11.0
+        
+        # Copy ARM64 binary
+        cp .build/release/CopyPathFinder .build/release/CopyPathFinder-arm64
+        
+        # Verify binary compatibility
+        echo "🔍 Checking Intel binary compatibility:"
+        otool -l .build/release/CopyPathFinder-x86_64 | grep -A5 "LC_VERSION_MIN_MACOSX" || echo "No LC_VERSION_MIN_MACOSX found"
+        
+        echo "🔍 Checking ARM64 binary compatibility:"
+        otool -l .build/release/CopyPathFinder-arm64 | grep -A5 "LC_VERSION_MIN_MACOSX" || echo "No LC_VERSION_MIN_MACOSX found"
       
     - name: Test
       run: |
@@ -58,70 +70,112 @@ jobs:
     - name: Package Application
       run: |
         mkdir -p artifact
-        cp -R .build/release/CopyPathFinder artifact/
         
-        # Create app bundle
-        mkdir -p artifact/CopyPathFinder.app/Contents/MacOS
-        mkdir -p artifact/CopyPathFinder.app/Contents/Resources
-        cp artifact/CopyPathFinder artifact/CopyPathFinder.app/Contents/MacOS/
+        # Create Intel version directory
+        echo "📦 Packaging Intel version..."
+        mkdir -p artifact/Intel/CopyPathFinder.app/Contents/MacOS
+        mkdir -p artifact/Intel/CopyPathFinder.app/Contents/Resources
+        cp .build/release/CopyPathFinder-x86_64 artifact/Intel/CopyPathFinder.app/Contents/MacOS/CopyPathFinder
         
-        # Copy original Info.plist and ensure minimum version
-        cp Sources/CopyPathFinder/Info.plist artifact/CopyPathFinder.app/Contents/
-        /usr/libexec/PlistBuddy -c "Set :LSMinimumSystemVersion 10.15" artifact/CopyPathFinder.app/Contents/Info.plist || true
+        # Copy Info.plist and set minimum version for Intel
+        cp Sources/CopyPathFinder/Info.plist artifact/Intel/CopyPathFinder.app/Contents/
+        /usr/libexec/PlistBuddy -c "Set :LSMinimumSystemVersion 10.15" artifact/Intel/CopyPathFinder.app/Contents/Info.plist
         
-        # Verify Info.plist has correct minimum version
-        echo "🔍 Checking minimum system version in Info.plist..."
-        /usr/libexec/PlistBuddy -c "Print :LSMinimumSystemVersion" artifact/CopyPathFinder.app/Contents/Info.plist
-        
-        # Add app icon if available
+        # Add icons to Intel version
         if [ -f "Assets/AppIcon.icns" ]; then
-          cp Assets/AppIcon.icns artifact/CopyPathFinder.app/Contents/Resources/
+          cp Assets/AppIcon.icns artifact/Intel/CopyPathFinder.app/Contents/Resources/
         fi
-        
-        # Add status bar icons if available
         if [ -f "Assets/StatusIcon.png" ]; then
-          cp Assets/StatusIcon.png artifact/CopyPathFinder.app/Contents/Resources/
+          cp Assets/StatusIcon.png artifact/Intel/CopyPathFinder.app/Contents/Resources/
         fi
         if [ -f "Assets/StatusIcon@2x.png" ]; then
-          cp Assets/StatusIcon@2x.png artifact/CopyPathFinder.app/Contents/Resources/
+          cp Assets/StatusIcon@2x.png artifact/Intel/CopyPathFinder.app/Contents/Resources/
         fi
+        
+        # Create ARM64 version directory
+        echo "📦 Packaging ARM64 version..."
+        mkdir -p artifact/ARM64/CopyPathFinder.app/Contents/MacOS
+        mkdir -p artifact/ARM64/CopyPathFinder.app/Contents/Resources
+        cp .build/release/CopyPathFinder-arm64 artifact/ARM64/CopyPathFinder.app/Contents/MacOS/CopyPathFinder
+        
+        # Copy Info.plist and set minimum version for ARM64
+        cp Sources/CopyPathFinder/Info.plist artifact/ARM64/CopyPathFinder.app/Contents/
+        /usr/libexec/PlistBuddy -c "Set :LSMinimumSystemVersion 11.0" artifact/ARM64/CopyPathFinder.app/Contents/Info.plist
+        
+        # Add icons to ARM64 version
+        if [ -f "Assets/AppIcon.icns" ]; then
+          cp Assets/AppIcon.icns artifact/ARM64/CopyPathFinder.app/Contents/Resources/
+        fi
+        if [ -f "Assets/StatusIcon.png" ]; then
+          cp Assets/StatusIcon.png artifact/ARM64/CopyPathFinder.app/Contents/Resources/
+        fi
+        if [ -f "Assets/StatusIcon@2x.png" ]; then
+          cp Assets/StatusIcon@2x.png artifact/ARM64/CopyPathFinder.app/Contents/Resources/
+        fi
+        
+        # Verify Info.plist versions
+        echo "🔍 Intel version requires macOS $(/usr/libexec/PlistBuddy -c "Print :LSMinimumSystemVersion" artifact/Intel/CopyPathFinder.app/Contents/Info.plist)"
+        echo "🔍 ARM64 version requires macOS $(/usr/libexec/PlistBuddy -c "Print :LSMinimumSystemVersion" artifact/ARM64/CopyPathFinder.app/Contents/Info.plist)"
         
     - name: Code Sign (Self-Signed)
       run: |
-        # Apply simple ad-hoc signature for CI builds
-        echo "🔐 Applying ad-hoc signature..."
-        codesign --force --deep --sign "-" --options runtime artifact/CopyPathFinder.app
+        # Apply ad-hoc signatures to both versions
+        echo "🔐 Signing Intel version..."
+        codesign --force --deep --sign "-" --options runtime artifact/Intel/CopyPathFinder.app
+        codesign --verify --verbose artifact/Intel/CopyPathFinder.app || true
         
-        # Verify signature and check minimum version
-        codesign --verify --verbose artifact/CopyPathFinder.app || true
+        echo "🔐 Signing ARM64 version..."
+        codesign --force --deep --sign "-" --options runtime artifact/ARM64/CopyPathFinder.app
+        codesign --verify --verbose artifact/ARM64/CopyPathFinder.app || true
         
-        # Check if the binary is compatible with macOS 10.15
-        echo "🔍 Checking binary compatibility..."
-        otool -l artifact/CopyPathFinder.app/Contents/MacOS/CopyPathFinder | grep -A5 "LC_VERSION_MIN_MACOSX" || true
+        # Check binary compatibility
+        echo "🔍 Checking Intel binary compatibility:"
+        otool -l artifact/Intel/CopyPathFinder.app/Contents/MacOS/CopyPathFinder | grep -A5 "LC_VERSION_MIN_MACOSX" || true
+        
+        echo "🔍 Checking ARM64 binary compatibility:"
+        otool -l artifact/ARM64/CopyPathFinder.app/Contents/MacOS/CopyPathFinder | grep -A5 "LC_VERSION_MIN_MACOSX" || true
         
     - name: Create DMG
       run: |
-        # Create simple DMG with drag-and-drop support
-        echo "📦 Creating DMG installer..."
+        # Create DMG installers for both architectures
         chmod +x scripts/create-simple-dmg.sh
-        ./scripts/create-simple-dmg.sh "artifact/CopyPathFinder.app" "artifact/CopyPathFinder.dmg"
         
-        # Verify DMG was created
-        echo "🔍 DMG file info:"
-        ls -la artifact/CopyPathFinder.dmg
-        hdiutil attach artifact/CopyPathFinder.dmg -readonly -mountpoint /tmp/dmg_test 2>/dev/null || true
-        if [ -d "/tmp/dmg_test" ]; then
-          echo "✅ DMG mounted successfully"
-          echo "📁 DMG contents:"
-          ls -la /tmp/dmg_test/
-          hdiutil detach /tmp/dmg_test 2>/dev/null || true
+        echo "📦 Creating Intel DMG installer..."
+        ./scripts/create-simple-dmg.sh "artifact/Intel/CopyPathFinder.app" "artifact/CopyPathFinder-Intel.dmg"
+        
+        echo "📦 Creating ARM64 DMG installer..."
+        ./scripts/create-simple-dmg.sh "artifact/ARM64/CopyPathFinder.app" "artifact/CopyPathFinder-ARM64.dmg"
+        
+        # Verify DMGs were created
+        echo "🔍 DMG files info:"
+        ls -la artifact/*.dmg
+        
+        # Verify Intel DMG contents
+        hdiutil attach artifact/CopyPathFinder-Intel.dmg -readonly 2>/dev/null || true
+        if [ -d "/Volumes/Copy Path Finder" ]; then
+          echo "✅ Intel DMG mounted successfully"
+          echo "📁 Intel DMG contents:"
+          ls -la "/Volumes/Copy Path Finder/"
+          hdiutil detach "/Volumes/Copy Path Finder" 2>/dev/null || true
+        fi
+        
+        # Verify ARM64 DMG contents
+        hdiutil attach artifact/CopyPathFinder-ARM64.dmg -readonly 2>/dev/null || true
+        if [ -d "/Volumes/Copy Path Finder" ]; then
+          echo "✅ ARM64 DMG mounted successfully"
+          echo "📁 ARM64 DMG contents:"
+          ls -la "/Volumes/Copy Path Finder/"
+          hdiutil detach "/Volumes/Copy Path Finder" 2>/dev/null || true
         fi
         
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: CopyPathFinder-macOS
-        path: artifact/
+        path: |
+          artifact/*.dmg
+          artifact/Intel/
+          artifact/ARM64/
         retention-days: 30
         
   release:
