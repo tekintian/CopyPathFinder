@@ -32,8 +32,22 @@ jobs:
         # Set minimum macOS version for compatibility
         export MACOSX_DEPLOYMENT_TARGET=10.15
         
-        # Build universal binary for Intel and Apple Silicon with explicit target
-        swift build -c release --triple x86_64-apple-macos10.15 --triple arm64-apple-macos10.15
+        # Clean previous builds
+        swift package clean
+        
+        # Build with explicit target flags
+        swift build -c release \
+          -Xswiftc -target -Xswiftc x86_64-apple-macos10.15 \
+          -Xswiftc -target -Xswiftc arm64-apple-macos10.15 \
+          -Xlinker -target -Xlinker x86_64-apple-macos10.15 \
+          -Xlinker -target -Xlinker arm64-apple-macos10.15
+        
+        # Verify binary compatibility
+        echo "🔍 Checking binary compatibility:"
+        otool -l .build/release/CopyPathFinder | grep -A5 "LC_VERSION_MIN_MACOSX" || echo "No LC_VERSION_MIN_MACOSX found"
+        
+        # Check minimum version in the binary
+        vtool -show .build/release/CopyPathFinder | grep -A5 "minos" || echo "No minos found"
       
     - name: Test
       run: |
@@ -49,11 +63,63 @@ jobs:
         mkdir -p artifact/CopyPathFinder.app/Contents/MacOS
         mkdir -p artifact/CopyPathFinder.app/Contents/Resources
         cp artifact/CopyPathFinder artifact/CopyPathFinder.app/Contents/MacOS/
-        cp Sources/CopyPathFinder/Info.plist artifact/CopyPathFinder.app/Contents/
+        
+        # Create and configure Info.plist with minimum version
+        cat > artifact/CopyPathFinder.app/Contents/Info.plist << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleLocalizations</key>
+    <array>
+        <string>en</string>
+        <string>zh-Hans</string>
+    </array>
+    <key>CFBundleExecutable</key>
+    <string>CopyPathFinder</string>
+    <key>CFBundleIdentifier</key>
+    <string>cn.tekin.copypathfinder</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>Copy Path Finder</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>10.15</string>
+    <key>LSUIElement</key>
+    <true/>
+    <key>NSSupportsAutomaticGraphicsSwitching</key>
+    <true/>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>This app needs Apple Events to access Finder and get selected file paths.</string>
+    <key>com.apple.security.automation.apple-events</key>
+    <array>
+        <string>com.apple.Finder</string>
+    </array>
+    <key>com.apple.security.app-sandbox</key>
+    <false/>
+</dict>
+</plist>
+EOF
         
         # Verify Info.plist has correct minimum version
         echo "🔍 Checking minimum system version in Info.plist..."
         /usr/libexec/PlistBuddy -c "Print :LSMinimumSystemVersion" artifact/CopyPathFinder.app/Contents/Info.plist
+        
+        # Verify binary target version
+        echo "🔍 Checking binary target version:"
+        if command -v vtool >/dev/null 2>&1; then
+          vtool -show artifact/CopyPathFinder.app/Contents/MacOS/CopyPathFinder | grep minos || echo "Binary version check failed"
+        fi
         
         # Add app icon if available
         if [ -f "Assets/AppIcon.icns" ]; then
