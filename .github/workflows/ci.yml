@@ -11,7 +11,7 @@ env:
 
 jobs:
   build:
-    runs-on: macos-14
+    runs-on: macos-13
     
     steps:
     - name: Checkout
@@ -28,7 +28,12 @@ jobs:
           ${{ runner.os }}-spm-
           
     - name: Build
-      run: swift build -c release
+      run: |
+        # Set minimum macOS version for compatibility
+        export MACOSX_DEPLOYMENT_TARGET=10.15
+        
+        # Build universal binary for Intel and Apple Silicon
+        swift build -c release --arch x86_64 --arch arm64
       
     - name: Test
       run: |
@@ -45,6 +50,10 @@ jobs:
         mkdir -p artifact/CopyPathFinder.app/Contents/Resources
         cp artifact/CopyPathFinder artifact/CopyPathFinder.app/Contents/MacOS/
         cp Sources/CopyPathFinder/Info.plist artifact/CopyPathFinder.app/Contents/
+        
+        # Verify Info.plist has correct minimum version
+        echo "🔍 Checking minimum system version in Info.plist..."
+        /usr/libexec/PlistBuddy -c "Print :LSMinimumSystemVersion" artifact/CopyPathFinder.app/Contents/Info.plist
         
         # Add app icon if available
         if [ -f "Assets/AppIcon.icns" ]; then
@@ -63,19 +72,32 @@ jobs:
       run: |
         # Apply simple ad-hoc signature for CI builds
         echo "🔐 Applying ad-hoc signature..."
-        codesign --force --deep --sign "-" artifact/CopyPathFinder.app
+        codesign --force --deep --sign "-" --options runtime artifact/CopyPathFinder.app
         
-        # Verify signature
+        # Verify signature and check minimum version
         codesign --verify --verbose artifact/CopyPathFinder.app || true
+        
+        # Check if the binary is compatible with macOS 10.15
+        echo "🔍 Checking binary compatibility..."
+        otool -l artifact/CopyPathFinder.app/Contents/MacOS/CopyPathFinder | grep -A5 "LC_VERSION_MIN_MACOSX" || true
         
     - name: Create DMG
       run: |
-        # Create DMG installer
-        mkdir -p dmg/CopyPathFinder
-        cp -R artifact/CopyPathFinder.app dmg/CopyPathFinder/
+        # Create simple DMG with drag-and-drop support
+        echo "📦 Creating DMG installer..."
+        chmod +x scripts/create-simple-dmg.sh
+        ./scripts/create-simple-dmg.sh "artifact/CopyPathFinder.app" "artifact/CopyPathFinder.dmg"
         
-        # Create DMG
-        hdiutil create -volname "Copy Path Finder" -srcfolder dmg -ov -format UDZO artifact/CopyPathFinder.dmg
+        # Verify DMG was created
+        echo "🔍 DMG file info:"
+        ls -la artifact/CopyPathFinder.dmg
+        hdiutil attach artifact/CopyPathFinder.dmg -readonly -mountpoint /tmp/dmg_test 2>/dev/null || true
+        if [ -d "/tmp/dmg_test" ]; then
+          echo "✅ DMG mounted successfully"
+          echo "📁 DMG contents:"
+          ls -la /tmp/dmg_test/
+          hdiutil detach /tmp/dmg_test 2>/dev/null || true
+        fi
         
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
@@ -86,7 +108,7 @@ jobs:
         
   release:
     needs: build
-    runs-on: macos-14
+    runs-on: macos-13
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     
     steps:
