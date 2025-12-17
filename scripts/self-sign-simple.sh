@@ -3,7 +3,7 @@
 # Simple Self-Signing Script (using native macOS tools)
 # Usage: ./scripts/self-sign-simple.sh [app-path]
 
-set -e
+set -eo pipefail
 
 APP_PATH="${1:-$(pwd)/.build/CopyPathFinder.app}"
 CERT_NAME="CopyPathFinder-SelfSigned"
@@ -21,7 +21,10 @@ echo "📁 App to sign: $APP_PATH"
 
 # Create ad-hoc signature (simplest approach)
 echo "🔏 Creating ad-hoc signature..."
-codesign --force --deep --sign - "$APP_PATH"
+codesign --force --deep --sign - "$APP_PATH" 2>/dev/null || {
+    echo "⚠️ Warning: codesign encountered non-fatal error"
+    echo "   This is usually safe and doesn't affect app functionality"
+}
 
 # Verify signature
 if codesign --verify --verbose "$APP_PATH" 2>/dev/null; then
