@@ -7,7 +7,7 @@ on:
 
 jobs:
   create-release:
-    runs-on: macos-12
+    runs-on: macos-14
     
     steps:
     - name: Checkout
@@ -19,91 +19,155 @@ jobs:
         xcode-version: latest-stable
         
     - name: Cache Swift Package Manager
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
-        path: .build
+        path: |
+          .build
+          ~/Library/Developer/Xcode/DerivedData
         key: ${{ runner.os }}-spm-${{ hashFiles('Package.swift') }}
         restore-keys: |
           ${{ runner.os }}-spm-
           
     - name: Build Release
-      run: swift build -c release
+      run: |
+        # Set minimum macOS version for compatibility
+        export MACOSX_DEPLOYMENT_TARGET=10.15
+        
+        # Clean previous builds
+        swift package clean
+        
+        # Build Intel version for macOS 10.15 compatibility
+        echo "🏗️ Building Intel (x86_64) version..."
+        swift build -c release \
+          --triple x86_64-apple-macos10.15 \
+          -Xlinker -platform_version -Xlinker macos -Xlinker 10.15 -Xlinker 10.15
+        
+        # Immediately copy and rename Intel binary
+        cp .build/release/CopyPathFinder .build/release/CopyPathFinder-x86_64
+        
+        # Create separate directory for ARM64 build
+        mkdir -p .build-arm64/release
+        swift build -c release \
+          --triple arm64-apple-macos11.0 \
+          -Xlinker -platform_version -Xlinker macos -Xlinker 11.0 -Xlinker 11.0 \
+          --build-path .build-arm64
+        
+        # Copy ARM64 binary to standard location
+        cp .build-arm64/release/CopyPathFinder .build/release/CopyPathFinder-arm64
+        
+        # Verify binary compatibility
+        echo "🔍 Checking Intel binary compatibility:"
+        otool -l .build/release/CopyPathFinder-x86_64 | grep -A5 "LC_VERSION_MIN_MACOSX" || echo "No LC_VERSION_MIN_MACOSX found"
+        
+        echo "🔍 Checking ARM64 binary compatibility:"
+        otool -l .build/release/CopyPathFinder-arm64 | grep -A5 "LC_VERSION_MIN_MACOSX" || echo "No LC_VERSION_MIN_MACOSX found"
+        
+        # List available binaries
+        echo "📋 Available binaries:"
+        ls -la .build/release/
       
     - name: Package Application
       run: |
-        # Create app bundle
-        mkdir -p Release/CopyPathFinder.app/Contents/{MacOS,Resources}
-        cp .build/release/CopyPathFinder Release/CopyPathFinder.app/Contents/MacOS/
-        cp Sources/CopyPathFinder/Info.plist Release/CopyPathFinder.app/Contents/
+        # Create Intel version
+        echo "📦 Packaging Intel version..."
+        mkdir -p Release/Intel/CopyPathFinder.app/Contents/{MacOS,Resources}
+        cp .build/release/CopyPathFinder-x86_64 Release/Intel/CopyPathFinder.app/Contents/MacOS/CopyPathFinder
+        cp Sources/CopyPathFinder/Info.plist Release/Intel/CopyPathFinder.app/Contents/
+        /usr/libexec/PlistBuddy -c "Set :LSMinimumSystemVersion 10.15" Release/Intel/CopyPathFinder.app/Contents/Info.plist
+        chmod +x Release/Intel/CopyPathFinder.app/Contents/MacOS/CopyPathFinder
         
-        # Set executable permissions
-        chmod +x Release/CopyPathFinder.app/Contents/MacOS/CopyPathFinder
+        # Create ARM64 version
+        echo "📦 Packaging ARM64 version..."
+        mkdir -p Release/ARM64/CopyPathFinder.app/Contents/{MacOS,Resources}
+        cp .build/release/CopyPathFinder-arm64 Release/ARM64/CopyPathFinder.app/Contents/MacOS/CopyPathFinder
+        cp Sources/CopyPathFinder/Info.plist Release/ARM64/CopyPathFinder.app/Contents/
+        /usr/libexec/PlistBuddy -c "Set :LSMinimumSystemVersion 11.0" Release/ARM64/CopyPathFinder.app/Contents/Info.plist
+        chmod +x Release/ARM64/CopyPathFinder.app/Contents/MacOS/CopyPathFinder
         
-        # Add app icon if available
-        if [ -f "Assets/AppIcon.icns" ]; then
-          cp Assets/AppIcon.icns Release/CopyPathFinder.app/Contents/Resources/
-        fi
-        
-        # Add status bar icons if available
-        if [ -f "Assets/StatusIcon.png" ]; then
-          cp Assets/StatusIcon.png Release/CopyPathFinder.app/Contents/Resources/
-        fi
-        if [ -f "Assets/StatusIcon@2x.png" ]; then
-          cp Assets/StatusIcon@2x.png Release/CopyPathFinder.app/Contents/Resources/
-        fi
+        # Add icons to both versions
+        for arch in Intel ARM64; do
+          if [ -f "Assets/AppIcon.icns" ]; then
+            cp Assets/AppIcon.icns Release/$arch/CopyPathFinder.app/Contents/Resources/
+          fi
+          if [ -f "Assets/StatusIcon.png" ]; then
+            cp Assets/StatusIcon.png Release/$arch/CopyPathFinder.app/Contents/Resources/
+          fi
+          if [ -f "Assets/StatusIcon@2x.png" ]; then
+            cp Assets/StatusIcon@2x.png Release/$arch/CopyPathFinder.app/Contents/Resources/
+          fi
+        done
         
     - name: Code Sign (Self-Signed)
       run: |
-        # Apply simple ad-hoc signature
-        echo "🔐 Applying ad-hoc signature..."
-        codesign --force --deep --sign "-" Release/CopyPathFinder.app
+        # Apply ad-hoc signatures to both versions
+        echo "🔐 Signing Intel version..."
+        codesign --force --deep --sign "-" --options runtime Release/Intel/CopyPathFinder.app
+        codesign --verify --verbose Release/Intel/CopyPathFinder.app || true
         
-        # Verify signature
-        codesign --verify --verbose Release/CopyPathFinder.app || true
+        echo "🔐 Signing ARM64 version..."
+        codesign --force --deep --sign "-" --options runtime Release/ARM64/CopyPathFinder.app
+        codesign --verify --verbose Release/ARM64/CopyPathFinder.app || true
         
     - name: Code Sign (Optional - Developer Certificate)
       if: env.APPLE_SIGNING_IDENTITY != ''
       run: |
         echo "🏛️ Applying developer certificate signature..."
-        codesign --force --verify --verbose --sign "${{ secrets.APPLE_SIGNING_IDENTITY }}" Release/CopyPathFinder.app
+        codesign --force --verify --verbose --sign "${{ secrets.APPLE_SIGNING_IDENTITY }}" Release/Intel/CopyPathFinder.app
+        codesign --force --verify --verbose --sign "${{ secrets.APPLE_SIGNING_IDENTITY }}" Release/ARM64/CopyPathFinder.app
       env:
         APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
         
     - name: Create DMG
       run: |
-        # Create DMG installer
-        mkdir -p dmg_root/CopyPathFinder
-        cp -R Release/CopyPathFinder.app dmg_root/CopyPathFinder/
+        # Create DMG installers for both architectures
+        chmod +x scripts/create-simple-dmg.sh
         
-        # Create DMG with custom icon layout
-        hdiutil create -volname "Copy Path Finder" -srcfolder dmg_root -ov -format UDZO CopyPathFinder.dmg
+        echo "📦 Creating Intel DMG installer..."
+        ./scripts/create-simple-dmg.sh "Release/Intel/CopyPathFinder.app" "CopyPathFinder-Intel.dmg"
+        
+        echo "📦 Creating ARM64 DMG installer..."
+        ./scripts/create-simple-dmg.sh "Release/ARM64/CopyPathFinder.app" "CopyPathFinder-ARM64.dmg"
         
     - name: Create ZIP
       run: |
-        cd Release
-        zip -r CopyPathFinder.zip CopyPathFinder.app
+        # Create ZIP archives for both architectures
+        cd Release/Intel
+        zip -r ../../CopyPathFinder-Intel.zip CopyPathFinder.app
+        cd ../ARM64
+        zip -r ../../CopyPathFinder-ARM64.zip CopyPathFinder.app
+        cd ../..
         
     - name: Generate Checksum
       run: |
-        sha256sum CopyPathFinder.dmg > CopyPathFinder.dmg.sha256
-        sha256sum Release/CopyPathFinder.zip > CopyPathFinder.zip.sha256
+        # Generate SHA256 checksums for all release files
+        sha256sum CopyPathFinder-Intel.dmg > CopyPathFinder-Intel.dmg.sha256
+        sha256sum CopyPathFinder-ARM64.dmg > CopyPathFinder-ARM64.dmg.sha256
+        sha256sum CopyPathFinder-Intel.zip > CopyPathFinder-Intel.zip.sha256
+        sha256sum CopyPathFinder-ARM64.zip > CopyPathFinder-ARM64.zip.sha256
         
     - name: Generate Release Notes
       run: |
         cat > release_notes.md << 'EOF'
         # 🚀 Copy Path Finder ${{ github.ref_name }}
         
-        ## 📦 下载说明
+        ## 🏗️ 架构支持说明
+        
+        本版本支持多架构，请根据你的 Mac 芯片选择合适的版本：
+        
+        | 架构版本 | 支持系统 | 适用设备 | 下载文件 |
+        |---------|---------|---------|---------|
+        **Intel (x86_64)** | macOS 10.15+ | Intel 芯片 Mac | `CopyPathFinder-Intel.dmg/zip` |
+        **Apple Silicon (ARM64)** | macOS 11.0+ | M123 芯片 Mac | `CopyPathFinder-ARM64.dmg/zip` |
         
         ### 🔧 安装方法
         
         1. **DMG 安装包** (推荐)
-           - 下载 `CopyPathFinder.dmg`
+           - 根据芯片选择对应版本：`CopyPathFinder-Intel.dmg` 或 `CopyPathFinder-ARM64.dmg`
            - 双击挂载，拖拽应用到 Applications 文件夹
            - 首次运行可能需要允许运行
         
         2. **ZIP 压缩包**
-           - 下载 `CopyPathFinder.zip`
+           - 根据芯片选择：`CopyPathFinder-Intel.zip` 或 `CopyPathFinder-ARM64.zip`
            - 解压后将 `CopyPathFinder.app` 复制到 Applications 文件夹
         
         ### 🔐 安全提示
@@ -124,7 +188,8 @@ jobs:
         
         ### 🖥️ 系统要求
         
-        - macOS 10.15 或更高版本
+        - **Intel 版本**: macOS 10.15 (Catalina) 或更高版本
+        - **ARM64 版本**: macOS 11.0 (Big Sur) 或更高版本
         - 需要授予 Apple Events 权限
         
         ### 📝 使用方法
@@ -144,7 +209,8 @@ jobs:
         
         **📊 文件校验**
         - SHA256 校验和文件已提供，请验证文件完整性
-        - `sha256sum -c CopyPathFinder.dmg.sha256`
+        - `sha256sum -c CopyPathFinder-Intel.dmg.sha256` (Intel 版本)
+        - `sha256sum -c CopyPathFinder-ARM64.dmg.sha256` (ARM64 版本)
         
         **⚠️ 免责声明**
         本软件仅供学习和个人使用，使用风险自负。
@@ -154,10 +220,14 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          CopyPathFinder.dmg
-          CopyPathFinder.dmg.sha256
-          Release/CopyPathFinder.zip
-          Release/CopyPathFinder.zip.sha256
+          CopyPathFinder-Intel.dmg
+          CopyPathFinder-Intel.dmg.sha256
+          CopyPathFinder-ARM64.dmg
+          CopyPathFinder-ARM64.dmg.sha256
+          CopyPathFinder-Intel.zip
+          CopyPathFinder-Intel.zip.sha256
+          CopyPathFinder-ARM64.zip
+          CopyPathFinder-ARM64.zip.sha256
         body_path: release_notes.md
         draft: false
         prerelease: false
