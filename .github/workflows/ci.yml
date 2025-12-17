@@ -35,19 +35,20 @@ jobs:
         # Clean previous builds
         swift package clean
         
-        # Build with explicit target flags
+        # Build with explicit target flags (fixed linker syntax)
         swift build -c release \
           -Xswiftc -target -Xswiftc x86_64-apple-macos10.15 \
           -Xswiftc -target -Xswiftc arm64-apple-macos10.15 \
-          -Xlinker -target -Xlinker x86_64-apple-macos10.15 \
-          -Xlinker -target -Xlinker arm64-apple-macos10.15
+          -Xlinker -platform_version -Xlinker macos -Xlinker 10.15 -Xlinker 10.15
         
         # Verify binary compatibility
         echo "🔍 Checking binary compatibility:"
         otool -l .build/release/CopyPathFinder | grep -A5 "LC_VERSION_MIN_MACOSX" || echo "No LC_VERSION_MIN_MACOSX found"
         
         # Check minimum version in the binary
-        vtool -show .build/release/CopyPathFinder | grep -A5 "minos" || echo "No minos found"
+        if command -v vtool >/dev/null 2>&1; then
+          vtool -show .build/release/CopyPathFinder | grep -A5 "minos" || echo "No minos found"
+        fi
       
     - name: Test
       run: |
