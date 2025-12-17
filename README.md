@@ -240,6 +240,64 @@ brew install --cask copypathfinder
 - **ARM64 版本**: macOS 11.0 (Big Sur) 或更高版本
 - Apple Events permission for Finder access
 
+## 🔧 故障排除 | Troubleshooting
+
+### ❌ 常见问题
+
+#### 1. "ScriptError 错误 - 1" 或 "未能完成该操作"
+
+**问题表现**：点击"拷贝路径"后通知中心显示错误
+
+**解决方案**：
+
+1. **检查 Apple Events 权限** (最常见原因)
+   ```
+   系统设置 > 隐私与安全性 > 自动化
+   找到 CopyPathFinder > 开启"允许控制 Finder"
+   ```
+
+2. **检查辅助功能权限** (如需要)
+   ```
+   系统设置 > 隐私与安全性 > 辅助功能
+   添加 CopyPathFinder 到允许列表
+   ```
+
+3. **使用权限修复脚本**
+   ```bash
+   /path/to/CopyPathFinder/scripts/fix_permissions.sh
+   ```
+
+4. **手动测试 AppleScript**
+   ```bash
+   /path/to/CopyPathFinder/scripts/debug_script_error.sh
+   ```
+
+#### 2. 应用无法启动或显示图标
+
+**解决方案**：
+- 检查应用是否被 macOS 隔离：`xattr -d com.apple.quarantine /Applications/CopyPathFinder.app`
+- 重启应用：`killall CopyPathFinder` 然后重新启动
+
+#### 3. 快捷键不响应
+
+**解决方案**：
+- 检查快捷键是否被其他应用占用
+- 在应用设置中重新设置快捷键
+- 确保应用有辅助功能权限
+
+### 🔍 调试模式
+
+启用调试模式来获取详细日志：
+```
+应用设置 > 高级 > 启用调试模式
+```
+
+### 📞 获取帮助
+
+- **GitHub Issues**: [提交问题](https://github.com/tekintian/CopyPathFinder/issues)
+- **文档查看**: [完整文档](https://github.com/tekintian/CopyPathFinder/blob/main/docs/)
+- **自签名指南**: [SELF_SIGNING.md](https://github.com/tekintian/CopyPathFinder/blob/main/docs/SELF_SIGNING.md)
+
 ## Development
 
 ### Building
