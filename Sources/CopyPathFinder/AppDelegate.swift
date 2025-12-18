@@ -157,11 +157,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             popover?.contentViewController = NSViewController()
             popover?.contentViewController?.view = contentView
             popover?.contentSize = NSSize(width: 220, height: 220)
+            popover?.behavior = .transient
         }
         
         if let button = statusItem?.button {
             popover?.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         }
+    }
+    
+    func hidePopover() {
+        popover?.performClose(nil)
     }
     
     @objc func showSettings() {
