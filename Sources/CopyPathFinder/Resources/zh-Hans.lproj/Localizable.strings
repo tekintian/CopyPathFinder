@@ -17,6 +17,7 @@
 // Settings Tabs
 "general" = "通用";
 "shortcuts" = "快捷键";
+"quick_toggle" = "快速切换";
 "advanced" = "高级";
 
 // General Settings
@@ -61,6 +62,16 @@
 "author" = "作者";
 "website" = "个人网站";
 "github" = "GitHub项目";
+
+// Quick Toggle
+"quick_toggle_enable" = "启用快速切换";
+"quick_toggle_description" = "启用后，左键点击状态栏图标将直接执行指定操作，右键显示菜单";
+"quick_toggle_action" = "快速切换操作";
+"quick_toggle_action_description" = "选择左键点击状态栏图标时执行的操作";
+"quick_toggle_copy_path" = "拷贝路径";
+"quick_toggle_copy_file_name" = "拷贝文件名";
+"quick_toggle_open_terminal" = "在终端中打开";
+"select_action" = "选择操作";
 
 // Notifications
 "path_copied" = "路径已拷贝";

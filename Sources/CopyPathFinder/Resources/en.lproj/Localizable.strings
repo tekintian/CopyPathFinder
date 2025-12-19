@@ -17,6 +17,7 @@
 // Settings Tabs
 "general" = "General";
 "shortcuts" = "Shortcuts";
+"quick_toggle" = "Quick Toggle";
 "advanced" = "Advanced";
 
 // General Settings
@@ -61,6 +62,16 @@
 "author" = "Author";
 "website" = "Website";
 "github" = "GitHub Project";
+
+// Quick Toggle
+"quick_toggle_enable" = "Enable Quick Toggle";
+"quick_toggle_description" = "When enabled, left-clicking the status bar icon will directly execute the specified action, right-click shows the menu";
+"quick_toggle_action" = "Quick Toggle Action";
+"quick_toggle_action_description" = "Select the action to perform when left-clicking the status bar icon";
+"quick_toggle_copy_path" = "Copy Path";
+"quick_toggle_copy_file_name" = "Copy File Name";
+"quick_toggle_open_terminal" = "Open in Terminal";
+"select_action" = "Select Action";
 
 // Notifications
 "path_copied" = "Path copied";

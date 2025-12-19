@@ -48,6 +48,16 @@ struct SettingsView: View {
                     }
                     .tag(1)
                 
+                // Quick Toggle Tab
+                QuickToggleSettingsView(settingsManager: settingsManager)
+                    .tabItem {
+                        VStack {
+                            Text("⚡")
+                            Text("quick_toggle".localized)
+                        }
+                    }
+                    .tag(2)
+                
                 // Advanced Tab
                 AdvancedSettingsView(settingsManager: settingsManager, shortcutManager: shortcutManager)
                     .tabItem {
@@ -56,7 +66,7 @@ struct SettingsView: View {
                             Text("advanced".localized)
                         }
                     }
-                    .tag(2)
+                    .tag(3)
             }
             .frame(height: 380)
         }

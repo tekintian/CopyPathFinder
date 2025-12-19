@@ -8,6 +8,10 @@ class SettingsManager: ObservableObject {
     @Published var appIcon: String = "default"
     @Published var appLanguage: String = "zh-Hans"
     
+    // Quick Toggle Settings
+    @Published var isQuickToggle: Bool = false
+    @Published var quickToggleType: QuickToggleType = .copyPath
+    
     // Advanced Settings
     @Published var enableDebugMode: Bool = false
     @Published var logLevel: String = "Info"
@@ -22,6 +26,8 @@ class SettingsManager: ObservableObject {
         static let showNotifications = "ShowNotifications"
         static let appIcon = "AppIcon"
         static let appLanguage = "AppLanguage"
+        static let isQuickToggle = "IsQuickToggle"
+        static let quickToggleType = "QuickToggleType"
         static let enableDebugMode = "EnableDebugMode"
         static let logLevel = "LogLevel"
         static let maxRecentPaths = "MaxRecentPaths"
@@ -37,6 +43,8 @@ class SettingsManager: ObservableObject {
         self.showNotifications = true
         self.appIcon = "default"
         self.appLanguage = systemLanguage
+        self.isQuickToggle = false
+        self.quickToggleType = .copyPath
         self.enableDebugMode = false
         self.logLevel = "Info"
         self.maxRecentPaths = 10
@@ -64,6 +72,11 @@ class SettingsManager: ObservableObject {
         if let language = userDefaults.string(forKey: Keys.appLanguage) {
             self.appLanguage = language
         }
+        self.isQuickToggle = userDefaults.bool(forKey: Keys.isQuickToggle)
+        if let quickToggleTypeRaw = userDefaults.string(forKey: Keys.quickToggleType),
+           let quickToggleType = QuickToggleType(rawValue: quickToggleTypeRaw) {
+            self.quickToggleType = quickToggleType
+        }
         self.enableDebugMode = userDefaults.bool(forKey: Keys.enableDebugMode)
         if let level = userDefaults.string(forKey: Keys.logLevel) {
             self.logLevel = level
@@ -81,6 +94,8 @@ class SettingsManager: ObservableObject {
         userDefaults.set(showNotifications, forKey: Keys.showNotifications)
         userDefaults.set(appIcon, forKey: Keys.appIcon)
         userDefaults.set(appLanguage, forKey: Keys.appLanguage)
+        userDefaults.set(isQuickToggle, forKey: Keys.isQuickToggle)
+        userDefaults.set(quickToggleType.rawValue, forKey: Keys.quickToggleType)
         userDefaults.set(enableDebugMode, forKey: Keys.enableDebugMode)
         userDefaults.set(logLevel, forKey: Keys.logLevel)
         userDefaults.set(maxRecentPaths, forKey: Keys.maxRecentPaths)
@@ -95,6 +110,8 @@ class SettingsManager: ObservableObject {
         showNotifications = true
         appIcon = "default"
         appLanguage = systemLanguage
+        isQuickToggle = false
+        quickToggleType = .copyPath
         enableDebugMode = false
         logLevel = "Info"
         maxRecentPaths = 10

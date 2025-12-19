@@ -39,12 +39,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     private func setupMenuBar() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         
-        if let button = statusItem?.button {
-            button.image = createStatusBarIcon()
-            button.action = #selector(togglePopover)
-            button.target = self
-        }
-        
         // Listen for settings changes
         settingsManager.objectWillChange
             .sink { [weak self] _ in
@@ -52,9 +46,103 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
                     self?.updateStatusBarIcon()
                     self?.updateLaunchAtLogin()
                     self?.updateLanguage()
+                    self?.setStatusToggle()
                 }
             }
             .store(in: &cancellables)
+        
+        setStatusToggle()
+    }
+    
+    func setStatusToggle() {
+        if let button = statusItem?.button {
+            button.image = createStatusBarIcon()
+            
+            if settingsManager.isQuickToggle {
+                // Quick Toggle 模式：移除菜单，设置点击动作
+                statusItem?.menu = nil
+                button.action = #selector(statusBarButtonClicked)
+                button.target = self
+                button.sendAction(on: [.leftMouseUp, .leftMouseDown,
+                                       .rightMouseUp, .rightMouseDown])
+            } else {
+                // 传统菜单模式：显示弹出菜单
+                statusItem?.menu = nil
+                button.action = #selector(togglePopover)
+                button.target = self
+            }
+        }
+    }
+    
+    @objc func statusBarButtonClicked(sender: NSStatusBarButton) {
+        let event = NSApp.currentEvent!
+        if event.type == .rightMouseDown || event.type == .rightMouseUp
+            || event.modifierFlags.contains(.control)
+        {
+            // 右键或 Ctrl+点击：显示传统菜单
+            showStatusBarMenu()
+        } else if event.type == .leftMouseUp {
+            // 左键：执行 Quick Toggle 动作
+            performQuickToggleAction()
+        }
+    }
+    
+    private func showStatusBarMenu() {
+        let menu = NSMenu()
+        
+        // 拷贝路径
+        let copyPathItem = NSMenuItem(title: "copy_path".localized, action: #selector(copySelectedPath), keyEquivalent: "")
+        copyPathItem.target = self
+        menu.addItem(copyPathItem)
+        
+        // 拷贝文件名
+        let copyFileNameItem = NSMenuItem(title: "copy_file_name".localized, action: #selector(copyFileName), keyEquivalent: "")
+        copyFileNameItem.target = self
+        menu.addItem(copyFileNameItem)
+        
+        // 分隔线
+        menu.addItem(NSMenuItem.separator())
+        
+        // 在终端中打开
+        let terminalItem = NSMenuItem(title: "open_in_terminal".localized, action: #selector(openInTerminal), keyEquivalent: "")
+        terminalItem.target = self
+        menu.addItem(terminalItem)
+        
+        // 分隔线
+        menu.addItem(NSMenuItem.separator())
+        
+        // 设置
+        let settingsItem = NSMenuItem(title: "settings".localized, action: #selector(showSettings), keyEquivalent: "")
+        settingsItem.target = self
+        menu.addItem(settingsItem)
+        
+        // 关于
+        let aboutItem = NSMenuItem(title: "about".localized, action: #selector(showAbout), keyEquivalent: "")
+        aboutItem.target = self
+        menu.addItem(aboutItem)
+        
+        // 分隔线
+        menu.addItem(NSMenuItem.separator())
+        
+        // 退出
+        let quitItem = NSMenuItem(title: "quit".localized, action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        menu.addItem(quitItem)
+        
+        // 显示菜单
+        statusItem?.menu = menu
+        statusItem?.button?.performClick(nil)
+        statusItem?.menu = nil
+    }
+    
+    private func performQuickToggleAction() {
+        switch settingsManager.quickToggleType {
+        case .copyPath:
+            copySelectedPath()
+        case .copyFileName:
+            copyFileName()
+        case .openInTerminal:
+            openInTerminal()
+        }
     }
     
     private func setupGlobalShortcuts() {
