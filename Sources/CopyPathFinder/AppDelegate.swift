@@ -364,15 +364,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         }
     }
     
-        private func openTerminal(at path: String) {
+    private func openTerminal(at path: String) {
         let script = """
         tell application "Terminal"
             activate
-            if (count of windows) is 0 then
-                do script "cd '\(path.replacingOccurrences(of: "'", with: "'\\''"))'"
-            else
-                do script "cd '\(path.replacingOccurrences(of: "'", with: "'\\''"))'" in window 1
-            end if
+            set newWindow to do script ""
+            do script "cd '\(path.replacingOccurrences(of: "'", with: "'\\''"))'" in newWindow
         end tell
         """
         
