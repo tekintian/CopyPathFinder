@@ -3,19 +3,19 @@ import Cocoa
 
 func getSelectedPath() throws -> String {
     let script = """
-    tell application "Finder"
-        try
+    try
+        tell application "Finder"
             set theSelection to selection
             if theSelection is {} then
                 set thePath to (target of front Finder window) as alias
             else
                 set thePath to item 1 of theSelection as alias
             end if
-            return POSIX path of thePath
-        on error errMsg
-            return POSIX path of (path to desktop)
-        end try
-    end tell
+            POSIX path of thePath
+        end tell
+    on error errMsg
+        POSIX path of (path to desktop)
+    end try
     """
     
     let appleScript = NSAppleScript(source: script)
