@@ -128,10 +128,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         let quitItem = NSMenuItem(title: "quit".localized, action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         menu.addItem(quitItem)
         
-        // 显示菜单
-        statusItem?.menu = menu
-        statusItem?.button?.performClick(nil)
-        statusItem?.menu = nil
+         // 使用 popUp 显示菜单
+        if let button = statusItem?.button,
+           let window = button.window {
+            // 获取按钮在屏幕上的位置
+            let buttonFrame = window.convertToScreen(button.frame)
+            // 使用按钮的左下角作为菜单弹出点
+            let menuPoint = NSPoint(x: buttonFrame.minX, y: buttonFrame.minY)
+            menu.popUp(positioning: nil, at: menuPoint, in: nil)
+        }
     }
     
     private func performQuickToggleAction() {
